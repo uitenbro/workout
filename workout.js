@@ -248,9 +248,10 @@ function displayWeightOptions(dayNum, exerNum) {
     img.src = "images/cancel.png";
     cancel.appendChild(img);
     cancel.href = "javascript:closeOptions();";
-    weightUpdate.appendChild(cancel);
+    //weightUpdate.appendChild(cancel);
 
     var h2 = document.createElement('h2');
+    h2.appendChild(cancel);
     h2.appendChild(document.createTextNode(dayData.dayName));
     weightUpdate.appendChild(h2);
 

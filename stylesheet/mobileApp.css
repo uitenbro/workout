@@ -220,6 +220,10 @@ div#options h2 {
 		color: #fff;
 		text-shadow: #000 0 1px 0;
 	}
+div#options h2 a {
+		float: right;
+		padding-right: 15px;
+	}
 .optionpanel {
 	/*background: url(../images/bglight.png) top left repeat-x;
 	background-color:#777777;
@@ -227,7 +231,7 @@ div#options h2 {
 	background: rgb(60, 72, 91) url(../images/bgHeaderbl.png) repeat-x top;
 	text-align: left;
 	/* padding: 20px 10px 15px 10px; */
-	padding: 15px 0px 15px 10px; 
+	padding: 35px 0px 15px 10px; 
 	position: absolute;
 	left: 0;
 	right: 0;
