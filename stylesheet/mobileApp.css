@@ -1,0 +1,408 @@
+/*
+
+	Universal iPhone UI Kit 1.0
+	Author: Diego Martín Lafuente.
+	E-Mail: dlafuente@gmail.com
+	AIM: Minidixier
+	Licence: AGPLv3
+	date: 2008-08-09
+
+	URL: www.minid.net
+	SVN URL: http://code.google.com/p/iphone-universal/source/checkout
+	Download: http://code.google.com/p/iphone-universal/downloads/list
+
+	*/
+
+
+body {
+	background: rgb(197,204,211) url(../images/stripes.png);
+	font-family: Helvetica;
+	margin: 0 0 0 10px;
+	padding: 0;
+	-webkit-user-select: none;
+	-webkit-text-size-adjust: none;
+}
+
+div#main {
+	margin-top: 55px;
+}
+
+div#main h1 {
+	color: rgb(76,86,108);
+	font: bold 18px Helvetica;
+	text-shadow: #fff 0 1px 0;
+	margin: 10px 0 0 10px;
+}
+
+div#main h1.right {
+	float: right;
+	margin: 0px 20px 0px 0px;
+
+}
+div#main h2 {
+	color: rgb(76,86,108);
+	font: bold 16px Helvetica;
+	text-shadow: #fff 0 1px 0;
+	margin: 0 0 0 10px;
+}
+
+div#main h2.right {
+	float: right;
+	margin: 0px 20px 0px 0px;
+
+}
+
+div#main ul + p, ul.data + p + p, ul.form + p + p {
+	color: rgb(76,86,108);
+	font: 14px Helvetica;
+	text-align: center;
+	text-shadow: white 0 1px 0;
+	margin: 0 10px 17px 0;
+	}
+
+div#header {
+	background: rgb(60, 72, 91) url(../images/bgHeaderbl.png) repeat-x top;
+	border-top: 1px solid rgb(205,213,223);
+	border-bottom: 1px solid rgb(46,55,68);
+	padding: 10px;
+	margin: 0 0 0 -10px;
+	min-height: 44px;
+	-webkit-box-sizing: border-box;
+	position: fixed;
+	top: 0px;
+	width: 100%;
+}
+
+div#header h1 {
+	color: #fff;
+	font: bold 20px/30px Helvetica;
+	text-shadow: #000 0 -1px 0;
+	text-align: center;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	width: 49%;
+	padding: 5px 0;
+	margin: 2px 0 0 -24%;
+	position: absolute;
+	top: 0;
+	left: 50%;
+}
+
+div#header a {
+	color: #FFF;
+	background: none;
+	font: bold 12px/30px Helvetica;
+	border-width: 0 5px;
+	margin: 0;
+	padding: 0 3px;
+	width: 55px;
+	height: 30px;
+	text-shadow: rgb(46,55,68) 0 -1px 0;
+	text-overflow: ellipsis;
+	text-decoration: none;
+	white-space: nowrap;
+	position: absolute;
+	overflow: hidden;
+	top: 7px;
+	right: 6px;
+}
+
+div#header #firstButton {
+	left: auto;
+	right: 5px;
+	/* padding: 0;
+	max-width: 55px;
+	border-width: 8px 8px 1 14px;
+	-webkit-border-image: url(../images/backButton.png) 0 8 0 14;*/
+	}
+
+div#header #secondButton {
+	left: auto;
+	right: 70px;
+	/*padding: 0 3px;
+	max-width: 55px;
+	border-width: 0 8px 0 14px;
+	-webkit-border-image: url(../images/toolButton.png) 0 8 0 14;*/
+	}
+
+div#header #thirdButton {
+	left: 5px;
+	right: auto;
+	/*padding: 0 3px;
+	max-width: 55px;
+	border-width: 0 8px 0 14px;
+	-webkit-border-image: url(../images/toolButton.png) 0 8 0 14;*/
+	}
+div#header #fourthButton {
+	left: 70px;
+	right: auto;
+	/*padding: 0 3px;
+	max-width: 55px;
+	border-width: 0 8px 0 14px;
+	-webkit-border-image: url(../images/toolButton.png) 0 8 0 14;*/
+	}
+.action {
+	border-width: 0 5px;
+	text-align: center;
+	-webkit-border-image: url(../images/grayButton.png) 0 5 0 5;
+}
+
+
+/***** List (base) ******/
+
+ul {
+	color: black;
+	background: #fff;
+	border: 1px solid #B4B4B4;
+	font: bold 17px Helvetica;
+	padding: 0;
+	margin: 15px 10px 17px 0;
+	-webkit-border-radius: 8px;
+}
+
+
+ul li {
+	color: #777;
+	border-top: 1px solid #B4B4B4;
+	list-style-type: none;
+	padding: 10px 10px 10px 10px;
+}
+
+/* when you have a first LI item on any list */
+
+li:first-child {
+	border-top: 0;
+	-webkit-border-top-left-radius: 8px;
+	-webkit-border-top-right-radius: 8px;
+}
+
+li:last-child {
+	-webkit-border-bottom-left-radius: 8px;
+	-webkit-border-bottom-right-radius: 8px;
+}
+
+ul li a {
+	color: #777;
+	font-size: 16px;
+	font-weight: bold;
+	text-decoration: none;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	display: block;
+	padding: 5px 10px 5px 10px;
+	margin: 0px;
+	-webkit-tap-highlight-color:rgba(0,0,0,0);			
+}
+ul li a.main {
+	color: #000;
+	font-size: 17px;
+}
+ul li a.mainright {
+	color: #000;
+	float: right;
+	text-align: right;
+	font-size: 17px;
+}
+ul li a.right {
+	float: right;
+	text-align: right;
+	margin-top: 0px;
+}
+
+/* option panel */
+
+
+
+div#options h2 {
+		font-size: 17px;
+		color: #fff;
+		text-shadow: #000 0 1px 0;
+	}
+.optionpanel {
+	/*background: url(../images/bglight.png) top left repeat-x;
+	background-color:#777777;
+	*/
+	background: rgb(60, 72, 91) url(../images/bgHeaderbl.png) repeat-x top;
+	text-align: left;
+	/* padding: 20px 10px 15px 10px; */
+	padding: 15px 0px 15px 10px; 
+	position: absolute;
+	left: 0;
+	right: 0;
+	top:0;
+	height:100%;
+	display: none;
+}
+
+/***** BUTTONS *****/
+
+.button {
+	color: #fff;
+	font: bold 20px/46px Helvetica;
+	text-decoration: none;
+	text-align: center;
+	text-shadow: #000 0 1px 0;
+	border-width: 0px 14px 0px 14px;
+	display: block;
+	margin: 3px 10px 0 0;
+	}
+
+	.green { -webkit-border-image: url(../images/greenButton.png) 0 14 0 14; }
+	.red { -webkit-border-image: url(../images/redButton.png) 0 14 0 14; }
+
+	.white {
+		color: #000;
+		text-shadow: #fff 0px 1px 0;
+		-webkit-border-image: url(../images/whiteButton.png) 0 14 0 14;
+		}
+
+	.black { -webkit-border-image: url(../images/grayButton.png) 0 14 0 14; }
+
+
+/***** FORMS *****/
+
+/* fields list */
+
+		ul.form {
+
+		}
+
+			ul.form li {
+				padding: 7px 10px;
+			}
+
+			ul.form li.error { border: 2px solid red; }
+			ul.form li.error + li.error { border-top: 0; }
+
+			ul.form li:hover { background: #fff; }
+
+			ul li input[type="text"], ul li input[type="password"], ul li textarea, ul li select, input[type="number"], input[type="date"] {
+				color: #777;
+				background: #fff url(../.png); /* this is a hack due the default input shadow that iphones uses on textfields */
+				border: 0;
+				font: bold 17px Helvetica;
+				padding: 0;
+				display: inline-block;
+				margin-left: 0px;
+				width: 100%;
+				-webkit-appearance: textarea;
+				}
+
+				ul li textarea {
+					height: 120px;
+					padding: 0;
+					text-indent: -2px;
+				}
+
+				ul li select {
+					text-indent: 0px;
+					background: transparent url(../images/chevron.png) no-repeat 103% 3px;
+					-webkit-appearance: textfield;
+					margin-left: -6px;
+					width: 104%;
+				}
+
+				ul li input[type="checkbox"], ul li input[type="radio"] {
+					margin: 0px;
+					color: rgb(50,79,133);
+					padding: 10px 10px;
+					}
+
+				ul li input[type="checkbox"]:after, ul li input[type="radio"]:after {
+					content: attr(title);
+					font: 17px Helvetica;
+					display: block;
+					width: 246px;
+					margin: -12px 0 0 17px;
+					}
+
+
+
+					/**** INFORMATION FIELDS ****/
+
+					ul.data li h4 {
+						margin: 10px 0 5px 0;
+					}
+
+						ul.data li p {
+							text-align: left;
+							font-size: 14px;
+							line-height: 18px;
+							font-weight: normal;
+							margin: 0;
+							}
+
+							ul.data li p + p { margin-top: 10px; }
+
+
+							ul.data li {
+								background: none;
+								padding: 15px 10px;
+								color: #222;
+							}
+
+							ul.data li a {
+								display: inline;
+								color: #2E3744;
+								text-decoration: underline;
+							}
+
+
+							ul.field li small {
+								position: absolute;
+								right: 25px;
+								margin-top: 3px;
+								z-index: 3;
+							}
+
+							ul.field li h3 {
+								color: rgb(76,86,108);
+								width: 25%;
+								font-size: 13px;
+								line-height: 18px;
+								margin: 0 10px 0 0;
+								float: left;
+								text-align: right;
+								overflow: hidden;
+								text-overflow: ellipsis;
+								white-space: nowrap;
+								padding: 0;
+								}
+
+								ul.field li a {
+									font-size: 13px;
+									line-height: 18px;
+									overflow: visible;
+									white-space: normal;
+									display: inline-block;
+									width: 60%;
+									padding: 0;
+									margin: 0 0 0 0;
+									vertical-align: top;
+									}
+
+								ul.field li big {
+									font-size: 13px;
+									line-height: 18px;
+									font-weight: normal;
+									overflow: visible;
+									white-space: normal;
+									display: inline-block;
+									width: 60%;
+									}
+
+
+
+
+
+
+								ul.field li small {
+									font-size: 13px;
+									font-weight: bold;
+								}
+
+
+
+
