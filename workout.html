@@ -4,20 +4,39 @@
 <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+<!-- ** Google Sign in client id ** -->
+<meta name="google-signin-client_id" content="225263823157-r3mnuks0si79i07727ph5khd65ptlu20.apps.googleusercontent.com">
+
 <link rel="apple-touch-startup-image" href="./canvas.png" />
 <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 
 <title>Workout App</title>
 <link rel="stylesheet" href="stylesheet/mobileApp.css">
+<script src="https://apis.google.com/js/platform.js" async defer></script>
 <script language="javascript" type="text/javascript" src="TNationNatural.js"></script>
-<script language="javascript" type="text/javascript" src="workout.js"></script>
+<script language="javascript" type="text/javascript" src="workout.js"></script> 
+<script language="javascript" type="text/javascript" src="googleAPI.js"></script>
+<script async defer src="https://apis.google.com/js/api.js"></script>
 
 </head>
-<body>
+<body onload="handleClientLoad();">
 
 <div id="header"></div>
 <div id="main"></div>
 <div id="options"></div>
+
+<!-- ** Google Sign in button and scope definition 
+<div class="g-signin2" 
+	data-onsuccess="onSignIn" 
+	data-longtitle="false" 
+	style="display:block">	
+</div>
+
+
+<span><a class="button" href="javascript:signOut();" style="background-color:black;width:180px;height:40px">Sign Out</a></span>
+<span><a class="button" href="javascript:listFiles();" style="background-color:black;width:180px;height:40px">List Files</a></span>
+** -->	
 
 <script type="text/javascript">
 	init();

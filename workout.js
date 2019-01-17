@@ -433,6 +433,14 @@ function showWorkoutOptions(dayNum) {
     buttonContainer.appendChild(info);
     workoutOptions.appendChild(buttonContainer);
 
+    // Display Google Drive Options
+    var google = document.createElement('a');
+    google.className = "black button";
+    google.href = "javascript:displayGoogleDriveOptions()";
+    google.appendChild(document.createTextNode("Google Drive"));
+    buttonContainer.appendChild(google);
+    workoutOptions.appendChild(buttonContainer);
+
     // Add to the page and hide main panel
     document.getElementById('options').replaceWith(workoutOptions);
     document.getElementById('header').style.display = 'none';
