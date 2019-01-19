@@ -18,7 +18,7 @@ function displayGoogleDriveOptions() {
 
     var h2 = document.createElement('h2');
     h2.appendChild(cancel);
-    h2.appendChild(document.createTextNode("Google Drive Sharing Options"));
+    h2.appendChild(document.createTextNode("Google Drive Options"));
     googleOptions.appendChild(h2);
 
     var ul = document.createElement('ul');
@@ -47,8 +47,7 @@ function displayGoogleDriveOptions() {
     var li = document.createElement('li')
     var a = document.createElement('a')
     a.className = "right";
-    a.id = "signInIndicator";
-    a.appendChild(document.createTextNode("\u2713 \u20E0"));
+    a.appendChild(GoogleIndicator);
     li.appendChild(a);
 
     var a = document.createElement('a')
@@ -120,12 +119,12 @@ function displayGoogleDriveOptions() {
      // Action Buttons
     var buttonContainer = document.createElement('p');
 
-    // Enable
+    // Picker
     var enable = document.createElement('a');
     enable.className = "black button";
     //enable.href = "javascript:enableGoogleDrive()";
-    enable.href = "javascript:handleClientLoad()";
-    enable.appendChild(document.createTextNode("Enable"));
+    enable.href = "javascript:createPicker()";
+    enable.appendChild(document.createTextNode("Picker"));
     buttonContainer.appendChild(enable);
     
     // Sign In
@@ -193,12 +192,101 @@ function listFiles() {
   }
 }
 
+function writeToGoogleDrive() {
+  if (GoogleUser.hasGrantedScopes(SCOPES)) {
+    gapi.client.drive.files.create({
+      'uploadType': 'media', 
+      'name' : 'workoutData.txt',
+      'body' : JSON.stringify(workoutData)
+    }).then(function (response) {
+      console.log("create");
+      console.log(response);
+
+    });
+
+  const boundary = '-------314159265358979323846';
+  const delimiter = "\r\n--" + boundary + "\r\n";
+  const close_delim = "\r\n--" + boundary + "--";
+
+  const contentType = 'application/json';
+
+  var metadata = {
+      'name': "workoutData.json",
+      'mimeType': 'application/json'
+    };
+
+    var multipartRequestBody =
+        delimiter +
+        'Content-Type: application/json\r\n\r\n' +
+        JSON.stringify(metadata) +
+        delimiter +
+        'Content-Type: ' + 'application/json' + '\r\n\r\n' +
+        JSON.stringify(workoutData) +
+        close_delim;
+
+    var request = gapi.client.request({
+      'path': '/upload/drive/v3/files',
+      'method': 'POST',
+      'params': {'uploadType': 'media'},
+      'name' : 'workoutData.json',
+      'body' : multipartRequestBody
+    });
+
+    request.execute(function(response) {
+      console.log(response); 
+    });
+
+  }
+  else {
+    setSigninStatus();
+    alert("Please sign in to Google Drive")
+  }
+}
+
+function createPicker() {
+  // https://developers.google.com/picker/docs/reference
+  if (GooglePickerLoad && GoogleUser.hasGrantedScopes(SCOPES) && GoogleAuthToken != "") {
+
+      console.log("Auth Token: " + GoogleAuthToken)
+      var view = new google.picker.View(google.picker.ViewId.DOCS);
+      view.setMimeTypes("image/png,image/jpeg,image/jpg");
+      //view.setMode('LIST');
+      var picker = new google.picker.PickerBuilder()
+          .enableFeature(google.picker.Feature.NAV_HIDDEN)
+          //.enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+          .setAppId("workoutapp-1547573908589")
+          .setOAuthToken(GoogleAuthToken)
+          .addView(view)
+          .addView(new google.picker.DocsUploadView())
+          .setDeveloperKey("AIzaSyBhUaOQu8zs6mhXELmgIpKEl6Ji-5bw2Uw")
+          .setCallback(pickerCallback)
+          .setSize(1051,650)
+          .build();
+       picker.setVisible(true);
+  }
+  else {
+    alert("Please sign in to Google Drive")
+  }
+}
+
+function pickerCallback(data) {
+  if (data.action == google.picker.Action.PICKED) {
+    var fileId = data.docs[0].id;
+    console.log('The user selected: ' + fileId);
+  }
+}
+
 //**************** Google authorization and Client API initialization and flow ****************//
 //************** https://developers.google.com/identity/protocols/OAuth2UserAgent *************//
 
 // Global for Google Authorization
 var GoogleAuth;
 var GoogleUser;
+var GoogleAuthToken = "";
+var GooglePickerLoad = false;
+var GoogleIndicator = document.createTextNode("-");
+GoogleIndicator.id = "signInIndicator";
+var initialized = false;
 
 // Scopes requried for this application
 var SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive';
@@ -207,6 +295,7 @@ function handleClientLoad() {
     // Load the API's client and auth2 modules.
     // Call the initClient function after the modules load.
     gapi.load('client:auth2', initClient);
+    gapi.load('picker', {'callback': onPickerApiLoad});
   }
 
 function initClient() {
@@ -222,7 +311,7 @@ function initClient() {
       'discoveryDocs': [discoveryUrl],
       'clientId': '225263823157-r3mnuks0si79i07727ph5khd65ptlu20.apps.googleusercontent.com',
       'scope': SCOPES
-  }).then(function () {
+  }).then(function (authResult) {
     GoogleAuth = gapi.auth2.getAuthInstance();
     console.log("Google Client API loaded")
 
@@ -231,9 +320,14 @@ function initClient() {
 
     // Handle initial sign-in state. (Determine if user is already signed in.)
     GoogleUser = GoogleAuth.currentUser.get();
-    setSigninStatus();
+    setSigninStatus(true);
 
   });
+}
+
+function onPickerApiLoad() {
+  console.log("Google Picker Loaded");
+  GooglePickerLoad = true;
 }
 
 function signOut() {
@@ -263,9 +357,21 @@ function setSigninStatus() {
   var isAuthorized = GoogleUser.hasGrantedScopes(SCOPES);
   if (isAuthorized) {
     console.log( "You are currently signed in and have granted scopes: " + SCOPES);
+    GoogleIndicator = document.createTextNode("\u2713");
+
+    // Set access token for OAuth end point calls
+    GoogleUser.reloadAuthResponse().then (function(authResponse) {
+      GoogleAuthToken = authResponse.access_token;
+      console.log("Auth Token: " + GoogleAuthToken);  
+    });
   } else { 
     console.log("You have not authorized this app or you are signed out");
+    GoogleIndicator = document.createTextNode("\u20E0");
   }
+  if (initialized == true) {
+    displayGoogleDriveOptions();
+  }
+  initialized = true;
 }
 
 
