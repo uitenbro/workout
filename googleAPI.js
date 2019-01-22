@@ -126,6 +126,14 @@ function displayGoogleDriveOptions() {
     enable.href = "javascript:createPicker()";
     enable.appendChild(document.createTextNode("Picker"));
     buttonContainer.appendChild(enable);
+
+    // Create Directory
+    var enable = document.createElement('a');
+    enable.className = "black button";
+    //enable.href = "javascript:enableGoogleDrive()";
+    enable.href = "javascript:createFolder('i10Apps')";
+    enable.appendChild(document.createTextNode("Create Directory"));
+    buttonContainer.appendChild(enable);
     
     // Sign In
     var enable = document.createElement('a');
@@ -146,7 +154,7 @@ function displayGoogleDriveOptions() {
     // Write
     var write = document.createElement('a');
     write.className = "black button";
-    write.href = "javascript:writeToGoogleDrive()";
+    write.href = "javascript:writeToGoogleDrive('workoutData.json', 'application/json', workoutData)";
     write.appendChild(document.createTextNode("Export"));
     buttonContainer.appendChild(write);
 
@@ -192,17 +200,22 @@ function listFiles() {
   }
 }
 
-function writeToGoogleDrive() {
-  if (GoogleUser.hasGrantedScopes(SCOPES)) {
-    gapi.client.drive.files.create({
-      'uploadType': 'media', 
-      'name' : 'workoutData.txt',
-      'body' : JSON.stringify(workoutData)
-    }).then(function (response) {
-      console.log("create");
-      console.log(response);
+function writeToGoogleDrive(name, mimeType, data, folderId) {
 
-    });
+  if (GoogleUser.hasGrantedScopes(SCOPES)) {
+    if (folderId == null) {
+      folderId = 'root';
+    }
+    // gapi.client.drive.files.create({
+    //   'uploadType': 'media', 
+    //   'name' : 'workoutData',
+    //   'body' : JSON.stringify(workoutData)
+    //   //'mimeTtype': 'application/vnd.google-apps.folder'
+    // }).then(function (response) {
+    //   console.log("create");
+    //   console.log(response);
+
+    // });
 
   const boundary = '-------314159265358979323846';
   const delimiter = "\r\n--" + boundary + "\r\n";
@@ -211,8 +224,11 @@ function writeToGoogleDrive() {
   const contentType = 'application/json';
 
   var metadata = {
-      'name': "workoutData.json",
-      'mimeType': 'application/json'
+      //'name': 'workoutData.json',
+      'name': name,
+      //'mimeType': 'application/json',
+      'mimeType': mimeType,
+      parents: [folderId]
     };
 
     var multipartRequestBody =
@@ -221,20 +237,33 @@ function writeToGoogleDrive() {
         JSON.stringify(metadata) +
         delimiter +
         'Content-Type: ' + 'application/json' + '\r\n\r\n' +
-        JSON.stringify(workoutData) +
+        JSON.stringify(data) +
         close_delim;
 
     var request = gapi.client.request({
       'path': '/upload/drive/v3/files',
       'method': 'POST',
-      'params': {'uploadType': 'media'},
-      'name' : 'workoutData.json',
+      'params': {'uploadType': 'multipart'}, //'name' : 'workoutData.json'},
+      'headers': { 'Content-Type': 'multipart/form-data; boundary="' + boundary + '",' },
       'body' : multipartRequestBody
     });
 
     request.execute(function(response) {
       console.log(response); 
     });
+
+    // var request = gapi.client.request({
+    //   'path': '/upload/drive/v3/files',
+    //   'method': 'POST',
+    //   'params': {'uploadType': 'media'},
+    //   'name' : 'workoutData2.json',
+    //   //'headers': { 'Content-Type': 'multipart/form-data; boundary="' + boundary + '",' },
+    //   'body' : JSON.stringify(workoutData)
+    // });
+
+    // request.execute(function(response) {
+    //   console.log(response); 
+    // });
 
   }
   else {
@@ -243,13 +272,42 @@ function writeToGoogleDrive() {
   }
 }
 
+function createFolder(folderName, parentFolderId) {
+  var folderId = 'root'
+  if (parentFolderId == "") {
+    parentFolderId = 'root';
+  }
+  var fileMetadata = {
+  'uploadType': 'media', 
+  'name': folderName,
+  'mimeType': 'application/vnd.google-apps.folder',
+  };
+  console.log(folderName, parentFolderId)
+  gapi.client.drive.files.create({
+    'uploadType': 'media', 
+    'name': folderName,
+    'mimeType': 'application/vnd.google-apps.folder',
+    //resource: fileMetadata,
+    //fields: 'id'
+  }, function (err, file) {
+    if (err) {
+      // Handle error
+      console.error(err);
+    } else {
+      console.log('Folder Id: ', file.id);
+      folderId = file.id;
+    }
+    return folderId;
+  });
+}
+
 function createPicker() {
   // https://developers.google.com/picker/docs/reference
   if (GooglePickerLoad && GoogleUser.hasGrantedScopes(SCOPES) && GoogleAuthToken != "") {
 
       console.log("Auth Token: " + GoogleAuthToken)
       var view = new google.picker.View(google.picker.ViewId.DOCS);
-      view.setMimeTypes("image/png,image/jpeg,image/jpg");
+      //view.setMimeTypes("image/png,image/jpeg,image/jpg");
       //view.setMode('LIST');
       var picker = new google.picker.PickerBuilder()
           .enableFeature(google.picker.Feature.NAV_HIDDEN)
@@ -363,6 +421,7 @@ function setSigninStatus() {
     GoogleUser.reloadAuthResponse().then (function(authResponse) {
       GoogleAuthToken = authResponse.access_token;
       console.log("Auth Token: " + GoogleAuthToken);  
+      //Just a quick note that the auth_token in the above example is not necessary if you are using gapi.client.init and specifying your token etc.
     });
   } else { 
     console.log("You have not authorized this app or you are signed out");
