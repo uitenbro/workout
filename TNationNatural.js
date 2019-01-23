@@ -3,6 +3,7 @@ var workoutJson = `
 {
 "workoutName" : "Natural Lifter's Workout", 
 "url" : "https://www.t-nation.com/training/the-best-damn-workout-plan-for-natural-lifters",
+"currentDay" : 0,
 "days" : [
     {
     "dayName" : "Monday - Pull 1",

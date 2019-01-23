@@ -1,11 +1,15 @@
-var workoutDay = 0;
+//var workoutDay = 0;
 var workoutData = {};
 
 function readStoredData() {
-    workoutDay = JSON.parse(localStorage.getItem("workoutDay"));
+    //workoutDay = JSON.parse(localStorage.getItem("workoutDay"));
     workoutData = JSON.parse(localStorage.getItem("workoutData"));
     //console.log ("readStoredData");
     //console.log (workoutDay, workoutData);
+    if (localStorage.getItem('googleData')) {
+        //console.log('found stored googleData');
+        googleData = JSON.parse(localStorage.getItem("googleData"));
+  }
 }
 
 function updateStoredData(item, value) {
@@ -23,24 +27,24 @@ function initializeStoredData () {
   }
 
 
-  if (localStorage.getItem('workoutDay')) {
-    //console.log('found stored workoutDay');
-  }
-  else {
-    //console.log('create default workoutDay');
-    localStorage.setItem('workoutDay', workoutDay);
-  }
+  // if (localStorage.getItem('workoutDay')) {
+  //   //console.log('found stored workoutDay');
+  // }
+  // else {
+  //   //console.log('create default workoutDay');
+  //   localStorage.setItem('workoutDay', workoutDay);
+  // }
 
 }
 
-function clearStoredData() {
+function clearStoredData(dataItem) {
 
-  if (localStorage.removeItem('workoutData')) {
+  if (localStorage.removeItem(dataItem)) {
     //console.log('found stored workoutData');
   }
-  if (localStorage.removeItem('workoutDay')) {
-    //console.log('found stored workoutDay');
-  }
+  // if (localStorage.removeItem('workoutDay')) {
+  //   //console.log('found stored workoutDay');
+  // }
 }
 
 /*
@@ -87,7 +91,7 @@ function printHeader (dayNum) {
     */
 
     if (typeof dayNum == 'undefined') {
-        dayNum = workoutDay;
+        dayNum = workoutData.currentDay;
     }
     //console.log("dayNum = " + dayNum);
 
@@ -108,7 +112,8 @@ function printHeader (dayNum) {
     var secondButton = document.createElement('a');
     secondButton.className = "action";
     secondButton.id = "secondButton";
-    secondButton.href="javascript:displayDay("+workoutDay+");";
+    secondButton.href="javascript:location.reload(true);";
+    //secondButton.href="javascript:displayDay("+workoutData.currentDay+");";
     secondButton.appendChild(document.createTextNode("Today"));
     header.appendChild(secondButton);
 
@@ -152,7 +157,7 @@ function printMain(dayNum) {
     */
 
     if (typeof dayNum == 'undefined') {
-        dayNum = workoutDay;
+        dayNum = workoutData.currentDay;
     }
     //console.log("dayNum = " + dayNum);
     readStoredData();
@@ -242,14 +247,15 @@ function printExercise(dayNum, exerNum) {
 
 function completeDay(dayNum) {
     //console.log("Complete");
-    workoutDay = dayNum+1;
-    updateStoredData('workoutDay', dayNum+1)
+    workoutData.currentDay = dayNum+1;
+    updateStoredData('workoutData', workoutData)
     printHeader(dayNum+1);
     printMain(dayNum+1);
 }
 function resetToday() {
     //console.log("Reset");
-    updateStoredData('workoutDay', 0)
+    workoutData.curentDay = 0;
+    updateStoredData('workoutDay', workoutData)
     printHeader(0);
     printMain(0);
 }
@@ -425,7 +431,7 @@ function showWorkoutOptions(dayNum) {
     buttonContainer.appendChild(info);
     workoutOptions.appendChild(buttonContainer);
 
-    // Reset Today
+    // Reset Workout
     var info = document.createElement('a');
     info.className = "black button";
     info.href = "javascript:resetWorkout();displayDay(0)";
@@ -450,7 +456,7 @@ function showWorkoutOptions(dayNum) {
 }
 
 function resetWorkout() {
-    clearStoredData();
+    clearStoredData('workoutData');
     init();
 }
 

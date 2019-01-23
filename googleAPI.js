@@ -1,3 +1,8 @@
+var googleData = {
+  'appFolder' : null,
+  'syncFile' : null
+}
+
 function displayGoogleDriveOptions() {
     //console.log(workoutData)
     //var dayData = workoutData.days[dayNum%(workoutData.days.length)];
@@ -118,23 +123,7 @@ function displayGoogleDriveOptions() {
 
      // Action Buttons
     var buttonContainer = document.createElement('p');
-
-    // Picker
-    var enable = document.createElement('a');
-    enable.className = "black button";
-    //enable.href = "javascript:enableGoogleDrive()";
-    enable.href = "javascript:createPicker()";
-    enable.appendChild(document.createTextNode("Picker"));
-    buttonContainer.appendChild(enable);
-
-    // Create Directory
-    var enable = document.createElement('a');
-    enable.className = "black button";
-    //enable.href = "javascript:enableGoogleDrive()";
-    enable.href = "javascript:createFolder('i10Apps')";
-    enable.appendChild(document.createTextNode("Create Directory"));
-    buttonContainer.appendChild(enable);
-    
+  
     // Sign In
     var enable = document.createElement('a');
     enable.className = "black button";
@@ -151,20 +140,52 @@ function displayGoogleDriveOptions() {
     disable.appendChild(document.createTextNode("Sign Out"));
     buttonContainer.appendChild(disable);
 
+    // Reset 
+    var disable = document.createElement('a');
+    disable.className = "black button";
+    //disable.href = "javascript:disableGoogleDrive()";
+    disable.href = "javascript:resetLocalGoogleData()";
+    disable.appendChild(document.createTextNode("Reset Google"));
+    buttonContainer.appendChild(disable);
+
+    // Create Directory
+    var directory = document.createElement('a');
+    directory.className = "black button";
+    //directory.href = "javascript:directoryGoogleDrive()";
+    directory.href = "javascript:createAppDirectory('workoutApp')";
+    directory.appendChild(document.createTextNode("Create Folder"));
+    buttonContainer.appendChild(directory);
+  
     // Write
     var write = document.createElement('a');
     write.className = "black button";
-    write.href = "javascript:writeToGoogleDrive('workoutData.json', 'application/json', workoutData)";
+    write.href = "javascript:writeToGoogleDrive('workoutData.json', 'application/json', workoutData, googleData.appFolder, handleCreateSyncFile)";
     write.appendChild(document.createTextNode("Export"));
+    buttonContainer.appendChild(write);
+
+    // Update
+    var write = document.createElement('a');
+    write.className = "black button";
+    write.href = "javascript:updateToGoogleDrive(googleData.syncFile, workoutData, handleUpdateSyncFile)";
+    write.appendChild(document.createTextNode("Update"));
     buttonContainer.appendChild(write);
 
     // Read
     var read = document.createElement('a');
     read.className = "black button";
-    //read.href = "javascript:readFromGoogleDrive()";
-    read.href = "javascript:listFiles()";
+    read.href = "javascript:readFromGoogleDrive(googleData.syncFile, handleReadSyncFile)";
+    //read.href = "javascript:listFiles()";
     read.appendChild(document.createTextNode("Import"));
     buttonContainer.appendChild(read);
+
+    // Picker
+    var picker = document.createElement('a');
+    picker.className = "black button";
+    //picker.href = "javascript:pickerGoogleDrive()";
+    picker.href = "javascript:createPicker()";
+    picker.appendChild(document.createTextNode("Picker"));
+    buttonContainer.appendChild(picker);
+
 
     googleOptions.appendChild(buttonContainer);
 
@@ -178,7 +199,7 @@ function displayGoogleDriveOptions() {
 
 function listFiles() {
 
-  console.log("Has scope: " + GoogleUser.hasGrantedScopes(SCOPES));
+  //console.log("Has scope: " + GoogleUser.hasGrantedScopes(SCOPES));
 
   if (GoogleUser.hasGrantedScopes(SCOPES)) {
     gapi.client.drive.files.list({'pageSize': 10,'fields': "nextPageToken, files(id, name)"}).then(function (response) {
@@ -200,22 +221,15 @@ function listFiles() {
   }
 }
 
-function writeToGoogleDrive(name, mimeType, data, folderId) {
+function writeToGoogleDrive(name, mimeType, data, parentFolder, callback) {
 
   if (GoogleUser.hasGrantedScopes(SCOPES)) {
-    if (folderId == null) {
-      folderId = 'root';
+    if (parentFolder == null) {
+      parentFolderId = 'root';
     }
-    // gapi.client.drive.files.create({
-    //   'uploadType': 'media', 
-    //   'name' : 'workoutData',
-    //   'body' : JSON.stringify(workoutData)
-    //   //'mimeTtype': 'application/vnd.google-apps.folder'
-    // }).then(function (response) {
-    //   console.log("create");
-    //   console.log(response);
-
-    // });
+    else {
+      parentFolderId = parentFolder.id;
+    }
 
   const boundary = '-------314159265358979323846';
   const delimiter = "\r\n--" + boundary + "\r\n";
@@ -224,11 +238,9 @@ function writeToGoogleDrive(name, mimeType, data, folderId) {
   const contentType = 'application/json';
 
   var metadata = {
-      //'name': 'workoutData.json',
       'name': name,
-      //'mimeType': 'application/json',
       'mimeType': mimeType,
-      parents: [folderId]
+      parents: [parentFolderId]
     };
 
     var multipartRequestBody =
@@ -240,31 +252,25 @@ function writeToGoogleDrive(name, mimeType, data, folderId) {
         JSON.stringify(data) +
         close_delim;
 
+    // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiclientrequest
     var request = gapi.client.request({
       'path': '/upload/drive/v3/files',
       'method': 'POST',
-      'params': {'uploadType': 'multipart'}, //'name' : 'workoutData.json'},
-      'headers': { 'Content-Type': 'multipart/form-data; boundary="' + boundary + '",' },
+      'params': {'uploadType' : 'multipart'},
+      'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '",' },
       'body' : multipartRequestBody
     });
 
-    request.execute(function(response) {
-      console.log(response); 
-    });
-
-    // var request = gapi.client.request({
-    //   'path': '/upload/drive/v3/files',
-    //   'method': 'POST',
-    //   'params': {'uploadType': 'media'},
-    //   'name' : 'workoutData2.json',
-    //   //'headers': { 'Content-Type': 'multipart/form-data; boundary="' + boundary + '",' },
-    //   'body' : JSON.stringify(workoutData)
-    // });
-
-    // request.execute(function(response) {
-    //   console.log(response); 
-    // });
-
+    request.execute(callback);
+    //request.execute(function(response) {
+      //console.log(response); 
+      // if (response.mimeType == "application/vnd.google-apps.folder") {
+      //   appFolder = response.id;
+      // }
+      // else if (response.mimeType == "application/json") {
+      //   syncFile = response.id;  
+      // }
+    //});
   }
   else {
     setSigninStatus();
@@ -272,33 +278,81 @@ function writeToGoogleDrive(name, mimeType, data, folderId) {
   }
 }
 
-function createFolder(folderName, parentFolderId) {
-  var folderId = 'root'
-  if (parentFolderId == "") {
-    parentFolderId = 'root';
+
+function updateToGoogleDrive(file, data, callback) {
+
+  if (GoogleUser.hasGrantedScopes(SCOPES)) {
+
+  const boundary = '-------314159265358979323846';
+  const delimiter = "\r\n--" + boundary + "\r\n";
+  const close_delim = "\r\n--" + boundary + "--";
+
+  const contentType = 'application/json';
+
+    var metadata = {
+        //'name': name,
+        'mimeType': contentType,
+        //parents: [parentFolderId]
+      };
+
+    var multipartRequestBody =
+        delimiter +
+        'Content-Type: application/json\r\n\r\n' +
+        JSON.stringify(metadata) +
+        delimiter +
+        'Content-Type: ' + 'application/json' + '\r\n\r\n' +
+        JSON.stringify(data) +
+        close_delim;
+
+    // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiclientrequest
+    var request = gapi.client.request({
+      'path': '/upload/drive/v3/files/' + file.id,
+      'method': 'PATCH',
+      'params': {'uploadType' : 'multipart'},
+      'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '",' },
+      'body' : multipartRequestBody
+    });
+
+    request.execute(callback);
+    // request.execute(function(response) {
+    //   console.log(response); 
+    //   callback(response);
+    //   if (response.mimeType == "application/vnd.google-apps.folder") {
+    //     appFolder = response.id;
+    //   }
+    //   else if (response.mimeType == "application/json") {
+    //     syncFileId = response.id;  
+    //   }
+    // });
   }
-  var fileMetadata = {
-  'uploadType': 'media', 
-  'name': folderName,
-  'mimeType': 'application/vnd.google-apps.folder',
-  };
-  console.log(folderName, parentFolderId)
-  gapi.client.drive.files.create({
-    'uploadType': 'media', 
-    'name': folderName,
-    'mimeType': 'application/vnd.google-apps.folder',
-    //resource: fileMetadata,
-    //fields: 'id'
-  }, function (err, file) {
-    if (err) {
-      // Handle error
-      console.error(err);
-    } else {
-      console.log('Folder Id: ', file.id);
-      folderId = file.id;
-    }
-    return folderId;
-  });
+  else {
+    setSigninStatus();
+    alert("Please sign in to Google Drive")
+  }
+}
+
+function createAppDirectory(folderName, parentFolder) {
+  writeToGoogleDrive(folderName, 'application/vnd.google-apps.folder', '', parentFolder, handleCreateAppDirectory);
+}
+
+function handleCreateAppDirectory(response) {
+  console.log(response);
+  googleData.appFolder = response;
+  updateStoredData('googleData', googleData);
+}
+
+function handleCreateSyncFile(response) {
+  console.log(response);
+  googleData.syncFile = response;
+  updateStoredData('googleData', googleData);
+}
+
+function handleUpdateSyncFile(response) {
+  console.log(response);
+}
+
+function handleReadSyncFile(response) {
+  console.log(response);
 }
 
 function createPicker() {
@@ -334,6 +388,43 @@ function pickerCallback(data) {
   }
 }
 
+function readFromGoogleDrive(file, callback) {
+
+  if (GoogleUser.hasGrantedScopes(SCOPES)) {
+
+    // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiclientrequest
+    var request = gapi.client.request({
+      'path': '/drive/v3/files/' + file.id,
+      'method': 'GET',
+      'params': {'alt' : 'media'},
+      //'headers': { 'Content-Type': 'multipart/form-data; boundary="' + boundary + '",' },
+      //'body' : multipartRequestBody
+    });
+
+    request.execute(callback);
+    //request.execute(function(response) {
+      // console.log(response); 
+      // if (response.mimeType == "application/vnd.google-apps.folder") {
+      //   appFolderId = response.id;
+      // }
+      // else if (response.mimeType == "application/json") {
+      //   syncFileId = response.id;  
+      // }
+    //});
+  }
+  else {
+    setSigninStatus();
+    alert("Please sign in to Google Drive")
+  }
+}
+
+function resetLocalGoogleData() {
+    googleData = {
+      'appFolder' : null,
+      'syncFile' : null
+    }
+    clearStoredData('googleData');
+}
 //**************** Google authorization and Client API initialization and flow ****************//
 //************** https://developers.google.com/identity/protocols/OAuth2UserAgent *************//
 
