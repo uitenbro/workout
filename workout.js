@@ -9,11 +9,15 @@ function readStoredData() {
     if (localStorage.getItem('googleData')) {
         //console.log('found stored googleData');
         googleData = JSON.parse(localStorage.getItem("googleData"));
-  }
+        readSyncFile(); // need to wait for updates localStorage and local data
+    }
 }
 
 function updateStoredData(item, value) {
     localStorage.setItem(item, JSON.stringify(value));
+    if (item != 'googleData' && googleData != null) {
+        updateSyncFile();
+    }
 }
 
 function initializeStoredData () {
@@ -77,6 +81,12 @@ xmlhttp.send();
 function init () {
     initializeStoredData();
     readStoredData();
+    printAll();
+}
+
+function printAll(){
+    printHeader();
+    printMain();
 }
 
 function printHeader (dayNum) {
@@ -160,7 +170,7 @@ function printMain(dayNum) {
         dayNum = workoutData.currentDay;
     }
     //console.log("dayNum = " + dayNum);
-    readStoredData();
+    //readStoredData();
 
     var main = document.createElement('div');
     main.id = 'main';

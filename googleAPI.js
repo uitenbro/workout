@@ -2,6 +2,7 @@ var googleData = {
   'appFolder' : null,
   'syncFile' : null
 }
+var googleSyncReadInProgress = false;
 
 function displayGoogleDriveOptions() {
     //console.log(workoutData)
@@ -145,16 +146,16 @@ function displayGoogleDriveOptions() {
     disable.className = "black button";
     //disable.href = "javascript:disableGoogleDrive()";
     disable.href = "javascript:resetLocalGoogleData()";
-    disable.appendChild(document.createTextNode("Reset Google"));
+    disable.appendChild(document.createTextNode("Reset Sync"));
     buttonContainer.appendChild(disable);
 
-    // Create Directory
-    var directory = document.createElement('a');
-    directory.className = "black button";
-    //directory.href = "javascript:directoryGoogleDrive()";
-    directory.href = "javascript:createAppDirectory('workoutApp')";
-    directory.appendChild(document.createTextNode("Create Folder"));
-    buttonContainer.appendChild(directory);
+    // Setup Sync
+    var sync = document.createElement('a');
+    sync.className = "black button";
+    //sync.href = "javascript:syncGoogleDrive()";
+    sync.href = "javascript:initGoogleSyncFile();";
+    sync.appendChild(document.createTextNode("Setup Sync"));
+    buttonContainer.appendChild(sync);
   
     // Write
     var write = document.createElement('a');
@@ -173,7 +174,7 @@ function displayGoogleDriveOptions() {
     // Read
     var read = document.createElement('a');
     read.className = "black button";
-    read.href = "javascript:readFromGoogleDrive(googleData.syncFile, handleReadSyncFile)";
+    read.href = "javascript:readSyncFile();";
     //read.href = "javascript:listFiles()";
     read.appendChild(document.createTextNode("Import"));
     buttonContainer.appendChild(read);
@@ -182,7 +183,7 @@ function displayGoogleDriveOptions() {
     var picker = document.createElement('a');
     picker.className = "black button";
     //picker.href = "javascript:pickerGoogleDrive()";
-    picker.href = "javascript:createPicker()";
+    picker.href = "javascript:createPicker();";
     picker.appendChild(document.createTextNode("Picker"));
     buttonContainer.appendChild(picker);
 
@@ -331,28 +332,38 @@ function updateToGoogleDrive(file, data, callback) {
   }
 }
 
-function createAppDirectory(folderName, parentFolder) {
-  writeToGoogleDrive(folderName, 'application/vnd.google-apps.folder', '', parentFolder, handleCreateAppDirectory);
+function createAppFolder(folderName, parentFolder) {
+  writeToGoogleDrive(folderName, 'application/vnd.google-apps.folder', '', parentFolder, handleCreateAppFolder);
 }
 
-function handleCreateAppDirectory(response) {
-  console.log(response);
+function handleCreateAppFolder(response) {
+  //console.log(response);
   googleData.appFolder = response;
   updateStoredData('googleData', googleData);
+  // Create Sync File
+  writeToGoogleDrive('workoutData.json', 'application/json', workoutData, googleData.appFolder, handleCreateSyncFile);
 }
 
 function handleCreateSyncFile(response) {
-  console.log(response);
+  //console.log(response);
   googleData.syncFile = response;
   updateStoredData('googleData', googleData);
+  console.log("Google Drive Data initialized with Local Storage")
 }
 
 function handleUpdateSyncFile(response) {
-  console.log(response);
+  //workoutData = response;
+  //updateStoredData('workoutData', workoutData);
+  //console.log(response);
+  console.log("Google Drive Data updated with Local Storage")
 }
 
 function handleReadSyncFile(response) {
-  console.log(response);
+  workoutData = response;
+  updateStoredData('workoutData', workoutData);
+  //console.log(response);
+  console.log("Local Storage updated with Google Drive Data");
+  printAll();
 }
 
 function createPicker() {
@@ -418,12 +429,56 @@ function readFromGoogleDrive(file, callback) {
   }
 }
 
+//function checkGoogleFileExists(fileId, callback) {
+//  // 
+//}
+
+function initGoogleSyncFile() {
+  if (GoogleUser.hasGrantedScopes(SCOPES)) {  
+    if (googleData.syncFile == null) { //} || checkGoogleFileExists(googleData.syncFile.id)) == false) { 
+        createSyncFile('workoutData.json');
+        alert ("Couldn't find existing sync file. A new sync file is being created"); 
+    } else {
+      alert("Synchronization is already setup.  Reset Sync to start over.");
+    }
+  } else {
+    setSigninStatus();
+    alert("Please sign in to Google Drive")
+  }
+}
+
+function createSyncFile() {
+    if (googleData.appFolder == null) { //|| checkGoogleFileExists(googleData.appDir.id) == false) {
+        createAppFolder('WorkoutApp');
+        alert ("Creating an Applicaiton Data Folder at Google Drive root.  All application data will be stored there. You can move this directory to another location on your drive and sync will still work.");
+    } else {
+        writeToGoogleDrive('workoutData.json', 'application/json', workoutData, googleData.appFolder, handleCreateSyncFile);
+    }
+}
+
+function readSyncFile() {
+  if (googleData.syncFile != null) {
+      readFromGoogleDrive(googleData.syncFile, handleReadSyncFile);
+  } else {
+      console.log("Google synchronization is not setup.");
+  }
+}
+
+function updateSyncFile() {
+  if (googleData.syncFile != null) {
+    updateToGoogleDrive(googleData.syncFile, workoutData, handleUpdateSyncFile);
+  } else {
+      console.log("Google synchronization is not setup.");
+  }
+}
+
 function resetLocalGoogleData() {
     googleData = {
       'appFolder' : null,
       'syncFile' : null
     }
     clearStoredData('googleData');
+    console.log("You can now delete the Application Folder on Google Drive.  Setup Sync to turn on Synchronization.")
 }
 //**************** Google authorization and Client API initialization and flow ****************//
 //************** https://developers.google.com/identity/protocols/OAuth2UserAgent *************//
@@ -470,6 +525,9 @@ function initClient() {
     // Handle initial sign-in state. (Determine if user is already signed in.)
     GoogleUser = GoogleAuth.currentUser.get();
     setSigninStatus(true);
+
+    // Call Application initialization
+    init();
 
   });
 }
