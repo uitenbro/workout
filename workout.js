@@ -6,6 +6,11 @@ function readStoredData() {
     workoutData = JSON.parse(localStorage.getItem("workoutData"));
     //console.log ("readStoredData");
     //console.log (workoutDay, workoutData);
+    if (typeof workoutData.currentDay == 'undefined') {
+        console.log("Updating to new format")
+        workoutData.currentDay = JSON.parse(localStorage.getItem("workoutDay"));
+        updateStoredData('workoutData', workoutData)
+    } 
     if (localStorage.getItem('googleData')) {
         //console.log('found stored googleData');
         googleData = JSON.parse(localStorage.getItem("googleData"));

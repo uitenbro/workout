@@ -2,7 +2,6 @@ var googleData = {
   'appFolder' : null,
   'syncFile' : null
 }
-var googleSyncReadInProgress = false;
 
 function displayGoogleDriveOptions() {
     //console.log(workoutData)
