@@ -1,7 +1,4 @@
-var googleData = {
-  'appFolder' : null,
-  'syncFile' : null
-}
+var googleData = null;
 
 function displayGoogleDriveOptions() {
     //console.log(workoutData)
@@ -28,134 +25,145 @@ function displayGoogleDriveOptions() {
 
     var ul = document.createElement('ul');
 
-    // // Form
-    // var form = document.createElement('form');
-    // //form.method = "post";
-    // //form.action = "javascript:updateForecastSettings(forecastSettings)";
-    // form.name = "updateWeight";
+    var GoogleApiIndicator = document.createTextNode("\u20E0");
+    var GoogleSignInIndicator = document.createTextNode("\u20E0");
 
-    // // dayNum
-    // var dayNumInput = document.createElement('input');
-    // dayNumInput.value = dayNum;
-    // dayNumInput.type = "hidden";
-    // dayNumInput.name = "dayNum";
-    // form.appendChild(dayNumInput);
-
-    // // exerNum
-    // var exerNumInput = document.createElement('input');
-    // exerNumInput.value = exerNum;
-    // exerNumInput.type = "hidden";
-    // exerNumInput.name = "exerNum";
-    // form.appendChild(exerNumInput);
+    if (GoogleApi && GooglePicker) {
+       GoogleApiIndicator = document.createTextNode("\u2713");
+    }
+    if (GoogleSignIn) {
+       GoogleSignInIndicator = document.createTextNode("\u2713");
+    }
 
     // Info
     var li = document.createElement('li')
     var a = document.createElement('a')
     a.className = "right";
-    a.appendChild(GoogleIndicator);
+    a.appendChild(GoogleApiIndicator);
     li.appendChild(a);
-
     var a = document.createElement('a')
-    a.className = "main";
-    a.appendChild(document.createTextNode("Signed In with Permissions"));
+    a.appendChild(document.createTextNode("Google API Loaded"));
     li.appendChild(a);
-
-
-    ul.appendChild(li);
-
-
-    // var li = document.createElement('li')
-    // var permissions = document.createElement('a');
-    // permissions.href = "javascript:";
-    // permissions.className = "";
-    // permissions.appendChild(document.createTextNode("Permissions Required:"));
-    // li.appendChild(permissions);
-    // ul.appendChild(li);
-
-    var li = document.createElement('li')
-    var permissions = document.createElement('a');
-    //permissions.href = "javascript:";
-    permissions.className = "";
-    permissions.appendChild(document.createTextNode("Create Files in Google Drive"));
-    li.appendChild(permissions);
     ul.appendChild(li);
 
     var li = document.createElement('li')
-    var permissions = document.createElement('a');
-    //permissions.href = "javascript:";
-    permissions.className = "";
-    permissions.appendChild(document.createTextNode("Read Files Created by this App"));
-    li.appendChild(permissions);
+    var a = document.createElement('a')
+    a.className = "right";
+    a.appendChild(GoogleSignInIndicator);
+    li.appendChild(a);
+    var a = document.createElement('a')
+    a.appendChild(document.createTextNode("Signed In / Authorized"));
+    li.appendChild(a);
     ul.appendChild(li);
+
+    if (googleData == null) {
+      var appFolderName = "none";
+      var syncFileName = "none";
+      var readTime = "never";
+      var writeTime = "never"
+    } else {
+      var appFolderName = googleData.appFolder.name;
+      var syncFileName = googleData.syncFile.name;
+      var readTime = googleData.readTime;
+      var writeTime = googleData.writeTime;
+    }
 
     var li = document.createElement('li')
-    var permissions = document.createElement('a');
-    //permissions.href = "javascript:";
-    permissions.className = "";
-    permissions.appendChild(document.createTextNode("Write Files Created by this App"));
-    li.appendChild(permissions);
+    var a = document.createElement('a')
+    a.className = "right";
+    a.appendChild(document.createTextNode(appFolderName));
+    li.appendChild(a);
+    var a = document.createElement('a')
+    a.appendChild(document.createTextNode("App Folder"));
+    li.appendChild(a);
     ul.appendChild(li);
 
-    //form.appendChild(li);
+
+    var li = document.createElement('li')
+    var a = document.createElement('a')
+    a.className = "right";
+    a.appendChild(document.createTextNode(syncFileName));
+    li.appendChild(a);
+    var a = document.createElement('a')
+    a.appendChild(document.createTextNode("Sync File"));
+    li.appendChild(a);
+    ul.appendChild(li);
+
+
+    var li = document.createElement('li')
+    var a = document.createElement('a')
+    a.className = "right";
+    a.appendChild(document.createTextNode(readTime));
+    li.appendChild(a);
+    var a = document.createElement('a')
+    a.appendChild(document.createTextNode("Last Read"));
+    li.appendChild(a);
+    ul.appendChild(li);
+
+
+    var li = document.createElement('li')
+    var a = document.createElement('a')
+    a.className = "right";
+    a.appendChild(document.createTextNode(writeTime));
+    li.appendChild(a);
+    var a = document.createElement('a')
+    a.appendChild(document.createTextNode("Last Write"));
+    li.appendChild(a);
+    ul.appendChild(li);
+
+
     
-    // for (j in dayData.exercises[exerNum].sets) {
-    //     var li = document.createElement('li');
-    //     var a = document.createElement('a');
-    //     a.className = "right";
-    //     var weightInput = document.createElement('input');
-    //     weightInput.style.textAlign = "right";
-    //     weightInput.type = "text";
-    //     weightInput.name = "weight["+j+"]";
-    //     weightInput.value = dayData.exercises[exerNum].sets[j].weight;
-    //     //console.log(weightInput.value,dayData.exercises[exerNum].sets[j].weight);
-    //     a.appendChild(weightInput);
-    //     li.appendChild(a);
-
-    //     var a = document.createElement('a');
-    //     a.appendChild(document.createTextNode(dayData.exercises[exerNum].sets[j].label));
-    //     li.appendChild(a);
-    //     form.appendChild(li);
-    // }
-    // form.appendChild(li);
-    // ul.appendChild(form);
     
     googleOptions.appendChild(ul);
 
      // Action Buttons
     var buttonContainer = document.createElement('p');
   
+    if (!GoogleSignIn) {
     // Sign In
     var enable = document.createElement('a');
     enable.className = "black button";
     //enable.href = "javascript:enableGoogleDrive()";
     enable.href = "javascript:signIn()";
-    enable.appendChild(document.createTextNode("Sign In"));
+    enable.appendChild(document.createTextNode("Sign In / Authorize"));
     buttonContainer.appendChild(enable);
+    }  else {
+      // Sign Out
+      var disable = document.createElement('a');
+      disable.className = "black button";
+      //disable.href = "javascript:disableGoogleDrive()";
+      disable.href = "javascript:signOut()";
+      disable.appendChild(document.createTextNode("Sign Out"));
+      buttonContainer.appendChild(disable);
 
-    // Sign Out
-    var disable = document.createElement('a');
-    disable.className = "black button";
-    //disable.href = "javascript:disableGoogleDrive()";
-    disable.href = "javascript:signOut()";
-    disable.appendChild(document.createTextNode("Sign Out"));
-    buttonContainer.appendChild(disable);
+      if (googleData != null) {
+        // Reset 
+        var disable = document.createElement('a');
+        disable.className = "black button";
+        //disable.href = "javascript:disableGoogleDrive()";
+        disable.href = "javascript:resetLocalGoogleData()";
+        disable.appendChild(document.createTextNode("Reset Sync"));
+        buttonContainer.appendChild(disable);
+      } else {
+        // Setup Sync
+        var sync = document.createElement('a');
+        sync.className = "black button";
+        //sync.href = "javascript:syncGoogleDrive()";
+        sync.href = "javascript:initGoogleSyncFile();";
+        sync.appendChild(document.createTextNode("Setup New Sync"));
+        buttonContainer.appendChild(sync);
+      }
 
-    // Reset 
-    var disable = document.createElement('a');
-    disable.className = "black button";
-    //disable.href = "javascript:disableGoogleDrive()";
-    disable.href = "javascript:resetLocalGoogleData()";
-    disable.appendChild(document.createTextNode("Reset Sync"));
-    buttonContainer.appendChild(disable);
+      // Picker
+      var picker = document.createElement('a');
+      picker.className = "black button";
+      //picker.href = "javascript:pickerGoogleDrive()";
+      picker.href = "javascript:createPicker();";
+      picker.appendChild(document.createTextNode("Import Sync File"));
+      buttonContainer.appendChild(picker);
+    }
 
-    // Setup Sync
-    var sync = document.createElement('a');
-    sync.className = "black button";
-    //sync.href = "javascript:syncGoogleDrive()";
-    sync.href = "javascript:initGoogleSyncFile();";
-    sync.appendChild(document.createTextNode("Setup Sync"));
-    buttonContainer.appendChild(sync);
-  
+/*
     // Write
     var write = document.createElement('a');
     write.className = "black button";
@@ -177,14 +185,8 @@ function displayGoogleDriveOptions() {
     //read.href = "javascript:listFiles()";
     read.appendChild(document.createTextNode("Import"));
     buttonContainer.appendChild(read);
-
-    // Picker
-    var picker = document.createElement('a');
-    picker.className = "black button";
-    //picker.href = "javascript:pickerGoogleDrive()";
-    picker.href = "javascript:createPicker();";
-    picker.appendChild(document.createTextNode("Picker"));
-    buttonContainer.appendChild(picker);
+*/
+    
 
 
     googleOptions.appendChild(buttonContainer);
@@ -197,29 +199,29 @@ function displayGoogleDriveOptions() {
 }
 
 
-function listFiles() {
+// function listFiles() {
 
-  //console.log("Has scope: " + GoogleUser.hasGrantedScopes(SCOPES));
+//   //console.log("Has scope: " + GoogleUser.hasGrantedScopes(SCOPES));
 
-  if (GoogleUser.hasGrantedScopes(SCOPES)) {
-    gapi.client.drive.files.list({'pageSize': 10,'fields': "nextPageToken, files(id, name)"}).then(function (response) {
-      var files = response.result.files;
-      if (files && files.length > 0) {
-        for (var i = 0; i < files.length; i++) {
-          var file = files[i];
-          console.log(file.name + ' (' + file.id + ')');
-        }
-      } 
-      else {
-        console.log('No files found.');
-      }
-    });
-  }
-  else {
-    setSigninStatus();
-    alert("Please sign in to Google Drive")
-  }
-}
+//   if (GoogleUser.hasGrantedScopes(SCOPES)) {
+//     gapi.client.drive.files.list({'pageSize': 10,'fields': "nextPageToken, files(id, name)"}).then(function (response) {
+//       var files = response.result.files;
+//       if (files && files.length > 0) {
+//         for (var i = 0; i < files.length; i++) {
+//           var file = files[i];
+//           console.log(file.name + ' (' + file.id + ')');
+//         }
+//       } 
+//       else {
+//         console.log('No files found.');
+//       }
+//     });
+//   }
+//   else {
+//     setSigninStatus();
+//     alert("Please sign in to Google Drive")
+//   }
+// }
 
 function writeToGoogleDrive(name, mimeType, data, parentFolder, callback) {
 
@@ -260,17 +262,7 @@ function writeToGoogleDrive(name, mimeType, data, parentFolder, callback) {
       'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '",' },
       'body' : multipartRequestBody
     });
-
     request.execute(callback);
-    //request.execute(function(response) {
-      //console.log(response); 
-      // if (response.mimeType == "application/vnd.google-apps.folder") {
-      //   appFolder = response.id;
-      // }
-      // else if (response.mimeType == "application/json") {
-      //   syncFile = response.id;  
-      // }
-    //});
   }
   else {
     setSigninStatus();
@@ -312,27 +304,12 @@ function updateToGoogleDrive(file, data, callback) {
       'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '",' },
       'body' : multipartRequestBody
     });
-
     request.execute(callback);
-    // request.execute(function(response) {
-    //   console.log(response); 
-    //   callback(response);
-    //   if (response.mimeType == "application/vnd.google-apps.folder") {
-    //     appFolder = response.id;
-    //   }
-    //   else if (response.mimeType == "application/json") {
-    //     syncFileId = response.id;  
-    //   }
-    // });
   }
   else {
     setSigninStatus();
     alert("Please sign in to Google Drive")
   }
-}
-
-function createAppFolder(folderName, parentFolder) {
-  writeToGoogleDrive(folderName, 'application/vnd.google-apps.folder', '', parentFolder, handleCreateAppFolder);
 }
 
 function handleCreateAppFolder(response) {
@@ -347,7 +324,10 @@ function handleCreateSyncFile(response) {
   //console.log(response);
   googleData.syncFile = response;
   updateStoredData('googleData', googleData);
-  console.log("Google Drive Data initialized with Local Storage")
+  console.log("Google Drive Data initialized with Local Storage");
+  setLastWriteTime();
+  googleSyncInProgress(false);;
+  displayGoogleDriveOptions();
 }
 
 function handleUpdateSyncFile(response) {
@@ -355,19 +335,43 @@ function handleUpdateSyncFile(response) {
   //updateStoredData('workoutData', workoutData);
   //console.log(response);
   console.log("Google Drive Data updated with Local Storage")
+  setLastWriteTime();
+  googleSyncInProgress(false);
 }
 
 function handleReadSyncFile(response) {
-  workoutData = response;
-  updateStoredData('workoutData', workoutData);
-  //console.log(response);
-  console.log("Local Storage updated with Google Drive Data");
+  if (response.error == undefined) {
+    workoutData = response;
+    updateStoredData('workoutData', workoutData);
+    //console.log(response);
+    console.log("Local Storage updated with Google Drive Data");
+    setLastReadTime();
+  }
+  else {
+    alert("Error reading Sync File")
+  }
+  googleSyncInProgress(false);;
   printAll();
+}
+
+function handleImportSyncFile(response) {
+  if (typeof response.error == undefined) {
+    workoutData = response;
+    updateStoredData('workoutData', workoutData);
+    //console.log(response);
+    console.log("Local Storage updated with Google Drive Data");
+    setLastReadTime();
+    googleSyncInProgress(false);
+  }
+  else {
+    alert("Error importing sync file.")
+  }
+  displayGoogleDriveOptions();
 }
 
 function createPicker() {
   // https://developers.google.com/picker/docs/reference
-  if (GooglePickerLoad && GoogleUser.hasGrantedScopes(SCOPES) && GoogleAuthToken != "") {
+  if (GooglePicker && GoogleUser.hasGrantedScopes(SCOPES) && GoogleAuthToken != "") {
 
       console.log("Auth Token: " + GoogleAuthToken)
       var view = new google.picker.View(google.picker.ViewId.DOCS);
@@ -395,6 +399,37 @@ function pickerCallback(data) {
   if (data.action == google.picker.Action.PICKED) {
     var fileId = data.docs[0].id;
     console.log('The user selected: ' + fileId);
+    syncToExistingFile(fileId);
+  }
+}
+
+function readMetaDataFromGoogleDrive(file, callback) {
+
+  if (GoogleUser.hasGrantedScopes(SCOPES)) {
+
+    // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiclientrequest
+    var request = gapi.client.request({
+      'path': '/drive/v3/files/' + file.id,
+      'method': 'GET',
+      'params': {'fields' : ' name, kind, id, mimeType, parents'}
+      //'headers': { 'Content-Type': 'multipart/form-data; boundary="' + boundary + '",' },
+      //'body' : multipartRequestBody
+    });
+
+    request.execute(callback);
+    //request.execute(function(response) {
+      // console.log(response); 
+      // if (response.mimeType == "application/vnd.google-apps.folder") {
+      //   appFolderId = response.id;
+      // }
+      // else if (response.mimeType == "application/json") {
+      //   syncFileId = response.id;  
+      // }
+    //});
+  }
+  else {
+    setSigninStatus();
+    alert("Please sign in to Google Drive");
   }
 }
 
@@ -424,7 +459,7 @@ function readFromGoogleDrive(file, callback) {
   }
   else {
     setSigninStatus();
-    alert("Please sign in to Google Drive")
+    alert("Please sign in to Google Drive");
   }
 }
 
@@ -434,9 +469,15 @@ function readFromGoogleDrive(file, callback) {
 
 function initGoogleSyncFile() {
   if (GoogleUser.hasGrantedScopes(SCOPES)) {  
-    if (googleData.syncFile == null) { //} || checkGoogleFileExists(googleData.syncFile.id)) == false) { 
+    if (googleData == null) { //} || checkGoogleFileExists(googleData.syncFile.id)) == false) { 
+        googleData = {
+          appFolder : null,
+          syncFile : null,
+          readTime : "never",
+          writeTime : "never"
+        }
         createSyncFile('workoutData.json');
-        alert ("Couldn't find existing sync file. A new sync file is being created"); 
+        //alert ("Couldn't find existing sync file. A new sync file is being created"); 
     } else {
       alert("Synchronization is already setup.  Reset Sync to start over.");
     }
@@ -446,10 +487,33 @@ function initGoogleSyncFile() {
   }
 }
 
+function syncToExistingFile(fileId) {
+  if (GoogleUser.hasGrantedScopes(SCOPES)) {  
+    if (googleData == null) { //} || checkGoogleFileExists(googleData.syncFile.id)) == false) { 
+        googleData = {
+          appFolder : null,
+          syncFile : null,
+          readTime : "never",
+          writeTime : "never"
+        }
+    }
+    var syncFile = {id : fileId };
+    readSyncFile(syncFile);
+  } else {
+    setSigninStatus();
+    alert("Please sign in to Google Drive")
+  }
+}
+
+function createAppFolder(folderName, parentFolder) {
+  writeToGoogleDrive(folderName, 'application/vnd.google-apps.folder', '', parentFolder, handleCreateAppFolder);
+}
+
 function createSyncFile() {
+    googleSyncInProgress(true);
     if (googleData.appFolder == null) { //|| checkGoogleFileExists(googleData.appDir.id) == false) {
         createAppFolder('WorkoutApp');
-        alert ("Creating an Applicaiton Data Folder at Google Drive root.  All application data will be stored there. You can move this directory to another location on your drive and sync will still work.");
+        alert ("An Application Data Folder will be created at the Google Drive root.  All application data will be stored there. You can move this directory to another location on your drive and sync will still work.");
     } else {
         writeToGoogleDrive('workoutData.json', 'application/json', workoutData, googleData.appFolder, handleCreateSyncFile);
     }
@@ -457,14 +521,43 @@ function createSyncFile() {
 
 function readSyncFile() {
   if (googleData.syncFile != null) {
+      googleSyncInProgress(true);
       readFromGoogleDrive(googleData.syncFile, handleReadSyncFile);
   } else {
       console.log("Google synchronization is not setup.");
   }
 }
 
+function getSyncFileMetadata(syncFile) {
+  readMetaDataFromGoogleDrive(syncFile, handleReadSyncFileMetadata);
+}
+function handleReadSyncFileMetadata(response) {
+  console.log(response);
+  if (response.error == undefined) {
+    googleData.syncFile = response;
+    var appFolder = {id : googleData.syncFile.parents[0]}
+    readMetaDataFromGoogleDrive(appFolder, handleReadAppFolderMetadata)
+  }
+  else {
+    alert ("Error Importing Sync File Metadata");
+  }
+
+}
+
+function handleReadAppFolderMetadata(response) {
+  if (response.error == undefined) {
+    googleData.appFolder = response;
+    updateStoredData('googleData', googleData);
+  }
+  else {
+    alert ("Error Importing App Folder Metadata");
+  }
+  readSyncFile(googleData.syncFile);
+}
+
 function updateSyncFile() {
   if (googleData.syncFile != null) {
+    googleSyncInProgress(true);;
     updateToGoogleDrive(googleData.syncFile, workoutData, handleUpdateSyncFile);
   } else {
       console.log("Google synchronization is not setup.");
@@ -472,12 +565,42 @@ function updateSyncFile() {
 }
 
 function resetLocalGoogleData() {
-    googleData = {
-      'appFolder' : null,
-      'syncFile' : null
-    }
+    googleData = null;
     clearStoredData('googleData');
-    console.log("You can now delete the Application Folder on Google Drive.  Setup Sync to turn on Synchronization.")
+    alert("You can now delete the Application Folder on Google Drive.  Setup Sync to turn on Synchronization.")
+    displayGoogleDriveOptions();
+}
+
+function googleSyncInProgress(inProgress) {
+  var loading = document.getElementById("loading");
+
+  if (inProgress) {
+    loading.style.display = "block";
+  } else {
+    loading.style.display = "none";
+  }
+}
+
+/*
+now = new Date();
+const offsetMs = now.getTimezoneOffset() * 60 * 1000;
+const dateLocal = new Date(now.getTime() - offsetMs);
+str = dateLocal.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+*/
+
+function setLastReadTime() {
+  var now = new Date();
+  googleData.readTimestamp = now.getTime();
+  googleData.readTime = now.toISOString().replace("T", " ").replace("Z", "");
+  //googleData.readTime = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate()+' '+now.getHours()+':'+now.getMinutes()+':'+now.getSeconds()+':'+now.getMilliseconds();
+  console.log("Read Sync File: " + " " + googleData.readTime );
+}
+function setLastWriteTime() {
+  var now = new Date();
+  googleData.writeTimestamp = now.getTime();
+  googleData.writeTime = now.toISOString().replace("T", " ").replace("Z", "");
+  //googleData.writeTime = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate()+' '+now.getHours()+':'+now.getMinutes()+':'+now.getSeconds()+':'+now.getMilliseconds();
+  console.log("Wrote Sync File: " + " " + googleData.writeTime );
 }
 //**************** Google authorization and Client API initialization and flow ****************//
 //************** https://developers.google.com/identity/protocols/OAuth2UserAgent *************//
@@ -486,9 +609,9 @@ function resetLocalGoogleData() {
 var GoogleAuth;
 var GoogleUser;
 var GoogleAuthToken = "";
-var GooglePickerLoad = false;
-var GoogleIndicator = document.createTextNode("-");
-GoogleIndicator.id = "signInIndicator";
+var GoogleApi = false;
+var GooglePicker = false;
+var GoogleSignIn = false;
 var initialized = false;
 
 // Scopes requried for this application
@@ -517,6 +640,7 @@ function initClient() {
   }).then(function (authResult) {
     GoogleAuth = gapi.auth2.getAuthInstance();
     console.log("Google Client API loaded")
+    GoogleApi = true;
 
     // Listen for sign-in state changes.
     GoogleAuth.isSignedIn.listen(setSigninStatus);
@@ -533,7 +657,7 @@ function initClient() {
 
 function onPickerApiLoad() {
   console.log("Google Picker Loaded");
-  GooglePickerLoad = true;
+  GooglePicker = true;
 }
 
 function signOut() {
@@ -563,7 +687,7 @@ function setSigninStatus() {
   var isAuthorized = GoogleUser.hasGrantedScopes(SCOPES);
   if (isAuthorized) {
     console.log( "You are currently signed in and have granted scopes: " + SCOPES);
-    GoogleIndicator = document.createTextNode("\u2713");
+    GoogleSignIn = true;
 
     // Set access token for OAuth end point calls
     GoogleUser.reloadAuthResponse().then (function(authResponse) {
@@ -573,7 +697,7 @@ function setSigninStatus() {
     });
   } else { 
     console.log("You have not authorized this app or you are signed out");
-    GoogleIndicator = document.createTextNode("\u20E0");
+    GoogleSignIn = false;
   }
   if (initialized == true) {
     displayGoogleDriveOptions();
