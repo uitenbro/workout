@@ -345,7 +345,13 @@ function displayWeightOptions(dayNum, exerNum) {
     var li = document.createElement('li')
     var a = document.createElement('a')
     a.className = "main";
-    a.appendChild(document.createTextNode(dayData.exercises[exerNum].exerciseName));
+    var nameInput = document.createElement('input');
+    nameInput.style.textAlign = "right";
+    nameInput.type = "text";
+    nameInput.name = "exercisesName["+exernum+"]";
+    nameInput.value = dayData.exercises[exerNum].exerciseName;
+    //a.appendChild(document.createTextNode(dayData.exercises[exerNum].exerciseName));
+    a.appendChild(nameInput);
     li.appendChild(a);
     form.appendChild(li);
     
@@ -363,7 +369,13 @@ function displayWeightOptions(dayNum, exerNum) {
         li.appendChild(a);
 
         var a = document.createElement('a');
-        a.appendChild(document.createTextNode(dayData.exercises[exerNum].sets[j].label));
+        var labelInput = document.createElement('input');
+        labelInput.style.textAlign = "right";
+        labelInput.type = "text";
+        labelInput.name = "label["+j+"]";
+        labelInput.value = dayData.exercises[exerNum].sets[j].label;
+        // a.appendChild(document.createTextNode(dayData.exercises[exerNum].sets[j].label));
+        a.appendChild(labelInput);
         li.appendChild(a);
         form.appendChild(li);
     }
