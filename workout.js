@@ -231,7 +231,7 @@ function printExercise(dayNum, exerNum) {
     var li = document.createElement('li')
     var a = document.createElement('a');
     a.className = "main"
-    //a.href = "";
+    a.href = "javascript:displayWeightOptions("+dayNum+","+exerNum+")";
     a.appendChild(document.createTextNode(exercise.exerciseName))
     li.appendChild(a);
     ul.appendChild(li);
@@ -252,7 +252,7 @@ function printExercise(dayNum, exerNum) {
 
         var a = document.createElement('a');
         a.className = ""
-        //a.href = "";
+        a.href = "javascript:displayWeightOptions("+dayNum+","+exerNum+")";
         a.appendChild(document.createTextNode(exercise.sets[j].label))
         li.appendChild(a);
         ul.appendChild(li);
@@ -344,11 +344,11 @@ function displayWeightOptions(dayNum, exerNum) {
     // Exercise Data
     var li = document.createElement('li')
     var a = document.createElement('a')
-    a.className = "main";
+    //a.className = "main";
     var nameInput = document.createElement('input');
-    nameInput.style.textAlign = "right";
+    nameInput.style.color = "black";
     nameInput.type = "text";
-    nameInput.name = "exercisesName["+exernum+"]";
+    nameInput.name = "exerciseName["+exerNum+"]";
     nameInput.value = dayData.exercises[exerNum].exerciseName;
     //a.appendChild(document.createTextNode(dayData.exercises[exerNum].exerciseName));
     a.appendChild(nameInput);
@@ -370,11 +370,10 @@ function displayWeightOptions(dayNum, exerNum) {
 
         var a = document.createElement('a');
         var labelInput = document.createElement('input');
-        labelInput.style.textAlign = "right";
         labelInput.type = "text";
         labelInput.name = "label["+j+"]";
         labelInput.value = dayData.exercises[exerNum].sets[j].label;
-        // a.appendChild(document.createTextNode(dayData.exercises[exerNum].sets[j].label));
+        //a.appendChild(document.createTextNode(dayData.exercises[exerNum].sets[j].label));
         a.appendChild(labelInput);
         li.appendChild(a);
         form.appendChild(li);
@@ -404,10 +403,12 @@ function displayWeightOptions(dayNum, exerNum) {
 function updateWeights (dayNum, exerNum) {
     //console.log("update weights" + dayNum + " " + exerNum);
     dayNum = dayNum%7;
+    workoutData.days[dayNum].exercises[exerNum].exerciseName = document.forms['updateWeight']['exerciseName['+exerNum+']'].value
     for (i in workoutData.days[dayNum].exercises[exerNum].sets) {
         //console.log("during "+document.forms['updateWeight']['weight['+i+']'].value)
         workoutData.days[dayNum].exercises[exerNum].sets[i].weight = document.forms['updateWeight']['weight['+i+']'].value;
-        updateStoredData('workoutData', workoutData)
+        workoutData.days[dayNum].exercises[exerNum].sets[i].label = document.forms['updateWeight']['label['+i+']'].value;
+        updateStoredData('workoutData', workoutData);
     }
 }
 function closeOptions() {
