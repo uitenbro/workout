@@ -296,6 +296,89 @@ function displayDay(dayNum) {
     closeOptions();
 }
 
+function displayLocalDataOptions(dayNum, exerNum) {
+    //console.log(workoutData)
+    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    //console.log(dayData)
+
+    locDataIO = document.createElement('div')
+    locDataIO.id = "options";
+    locDataIO.className = "optionpanel";
+    locDataIO.style.display = "block"
+
+    // Cancel
+    var cancel = document.createElement('a');
+    var img = document.createElement('img');
+    img.src = "images/cancel.png";
+    cancel.appendChild(img);
+    cancel.href = "javascript:closeOptions();";
+    //weightUpdate.appendChild(cancel);
+
+    var h2 = document.createElement('h2');
+    h2.appendChild(cancel);
+    h2.appendChild(document.createTextNode(workoutData.workoutName+" - JSON Workout Data"));
+    locDataIO.appendChild(h2);
+
+    var ul = document.createElement('ul');
+
+    // Form
+    var form = document.createElement('form');
+    //form.method = "post";
+    //form.action = "javascript:updateForecastSettings(forecastSettings)";
+    form.name = "locDataIO";
+
+    var li = document.createElement('li')
+    var a = document.createElement('a')
+
+    // wokoutData JSON input / output text box
+    var workoutDataJsonIO = document.createElement('textarea');
+    workoutDataJsonIO.value = JSON.stringify(workoutData, null, 1);
+    workoutDataJsonIO.style.fontSize = "7px";
+    workoutDataJsonIO.rows = "35";
+    workoutDataJsonIO.columns = "80";
+    //workoutDataJsonIO.wrap = "hard";    
+    workoutDataJsonIO.name = "workoutDataJsonIO";
+
+    a.appendChild(workoutDataJsonIO);
+    li.appendChild(a);
+    form.appendChild(li);
+    ul.appendChild(form);
+    locDataIO.appendChild(ul);
+
+    // Action Buttons
+    var buttonContainer = document.createElement('p');
+
+    // Save
+    var save = document.createElement('a');
+    save.className = "black button";
+    save.href = "javascript:updateLocalData();displayDay("+dayNum+")";
+    save.appendChild(document.createTextNode("Save"));
+    buttonContainer.appendChild(save);
+    locDataIO.appendChild(buttonContainer);
+
+    // Add to the page and hide main panel
+    document.getElementById('options').replaceWith(locDataIO);
+    document.getElementById('header').style.display = 'none';
+    document.getElementById('main').style.display = 'none';
+    window.scrollTo(0, 0);
+    
+}
+function updateLocalData () {
+    //console.log("update weights" + dayNum + " " + exerNum);
+    try {
+        var newWorkoutData = JSON.parse(document.forms['locDataIO']['workoutDataJsonIO'].value);
+
+    } catch(error) {
+        alert(error); // annunciate error without changing anything
+    }
+    // Ensure the new workout data was turned into an object and then update it
+    if (newWorkoutData != undefined) {
+        // TODO: Add other format and consistency checks for newWorkoutData
+        workoutData = newWorkoutData;
+        updateStoredData('workoutData', workoutData);
+    }
+}
+
 function displayWeightOptions(dayNum, exerNum) {
     //console.log(workoutData)
     var dayData = workoutData.days[dayNum%(workoutData.days.length)];
@@ -402,14 +485,14 @@ function displayWeightOptions(dayNum, exerNum) {
 }
 function updateWeights (dayNum, exerNum) {
     //console.log("update weights" + dayNum + " " + exerNum);
-    dayNum = dayNum%7;
+    dayNum = dayNum % workoutData.days.length;
     workoutData.days[dayNum].exercises[exerNum].exerciseName = document.forms['updateWeight']['exerciseName['+exerNum+']'].value
     for (i in workoutData.days[dayNum].exercises[exerNum].sets) {
         //console.log("during "+document.forms['updateWeight']['weight['+i+']'].value)
         workoutData.days[dayNum].exercises[exerNum].sets[i].weight = document.forms['updateWeight']['weight['+i+']'].value;
         workoutData.days[dayNum].exercises[exerNum].sets[i].label = document.forms['updateWeight']['label['+i+']'].value;
-        updateStoredData('workoutData', workoutData);
     }
+    updateStoredData('workoutData', workoutData);
 }
 function closeOptions() {
     document.getElementById('header').style.display = 'block';
@@ -473,6 +556,14 @@ function showWorkoutOptions(dayNum) {
     google.href = "javascript:displayGoogleDriveOptions()";
     google.appendChild(document.createTextNode("Google Drive"));
     buttonContainer.appendChild(google);
+    workoutOptions.appendChild(buttonContainer);
+
+    // Display Local Storage Export/Import
+    var locData = document.createElement('a');
+    locData.className = "black button";
+    locData.href = "javascript:displayLocalDataOptions()";
+    locData.appendChild(document.createTextNode("Data Export / Import"));
+    buttonContainer.appendChild(locData);
     workoutOptions.appendChild(buttonContainer);
 
     // Add to the page and hide main panel
