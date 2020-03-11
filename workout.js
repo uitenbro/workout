@@ -351,7 +351,7 @@ function displayLocalDataOptions(dayNum, exerNum) {
     // Save
     var save = document.createElement('a');
     save.className = "black button";
-    save.href = "javascript:updateLocalData();displayDay("+dayNum+")";
+    save.href = "javascript:updateLocalData("+dayNum+");";
     save.appendChild(document.createTextNode("Save"));
     buttonContainer.appendChild(save);
     locDataIO.appendChild(buttonContainer);
@@ -363,7 +363,7 @@ function displayLocalDataOptions(dayNum, exerNum) {
     window.scrollTo(0, 0);
     
 }
-function updateLocalData () {
+function updateLocalData (dayNum) {
     //console.log("update weights" + dayNum + " " + exerNum);
     try {
         var newWorkoutData = JSON.parse(document.forms['locDataIO']['workoutDataJsonIO'].value);
@@ -376,6 +376,7 @@ function updateLocalData () {
         // TODO: Add other format and consistency checks for newWorkoutData
         workoutData = newWorkoutData;
         updateStoredData('workoutData', workoutData);
+        displayDay(dayNum);
     }
 }
 
