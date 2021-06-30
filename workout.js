@@ -269,7 +269,7 @@ function completeDay(dayNum) {
 }
 function resetToday() {
     //console.log("Reset");
-    workoutData.curentDay = 0;
+    workoutData.currentDay = 0;
     updateStoredData('workoutDay', workoutData)
     printHeader(0);
     printMain(0);
