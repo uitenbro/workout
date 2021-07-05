@@ -70,10 +70,18 @@ function displayGoogleDriveOptions() {
 
     var li = document.createElement('li')
     var a = document.createElement('a')
+    if (googleData != null) {
+      a.href = "https://drive.google.com/open?id="+googleData.appFolder.id;
+      a.target = "_blank";
+    }
     a.className = "right";
     a.appendChild(document.createTextNode(appFolderName));
     li.appendChild(a);
     var a = document.createElement('a')
+    if (googleData != null) {
+      a.target = "_blank";
+      a.href = "https://drive.google.com/open?id="+googleData.appFolder.id;
+    }
     a.appendChild(document.createTextNode("App Folder"));
     li.appendChild(a);
     ul.appendChild(li);
@@ -82,9 +90,17 @@ function displayGoogleDriveOptions() {
     var li = document.createElement('li')
     var a = document.createElement('a')
     a.className = "right";
+    if (googleData != null) {
+      a.target = "_blank";
+      a.href = "https://drive.google.com/open?id="+googleData.syncFile.id;
+    }
     a.appendChild(document.createTextNode(syncFileName));
     li.appendChild(a);
     var a = document.createElement('a')
+    if (googleData != null) {
+      a.target = "_blank";
+      a.href = "https://drive.google.com/open?id="+googleData.syncFile.id;
+    }
     a.appendChild(document.createTextNode("Sync File"));
     li.appendChild(a);
     ul.appendChild(li);
@@ -124,7 +140,7 @@ function displayGoogleDriveOptions() {
     var enable = document.createElement('a');
     enable.className = "black button";
     //enable.href = "javascript:enableGoogleDrive()";
-    enable.href = "javascript:signIn()";
+    enable.href = "javascript:signIn();displayGoogleDriveOptions();";
     enable.appendChild(document.createTextNode("Sign In / Authorize"));
     buttonContainer.appendChild(enable);
     }  else {
@@ -132,7 +148,7 @@ function displayGoogleDriveOptions() {
       var disable = document.createElement('a');
       disable.className = "black button";
       //disable.href = "javascript:disableGoogleDrive()";
-      disable.href = "javascript:signOut()";
+      disable.href = "javascript:signOut();displayGoogleDriveOptions();";
       disable.appendChild(document.createTextNode("Sign Out"));
       buttonContainer.appendChild(disable);
 
@@ -141,7 +157,7 @@ function displayGoogleDriveOptions() {
         var disable = document.createElement('a');
         disable.className = "black button";
         //disable.href = "javascript:disableGoogleDrive()";
-        disable.href = "javascript:resetLocalGoogleData()";
+        disable.href = "javascript:resetLocalGoogleData();displayGoogleDriveOptions();";
         disable.appendChild(document.createTextNode("Reset Sync"));
         buttonContainer.appendChild(disable);
       } else {
@@ -149,7 +165,7 @@ function displayGoogleDriveOptions() {
         var sync = document.createElement('a');
         sync.className = "black button";
         //sync.href = "javascript:syncGoogleDrive()";
-        sync.href = "javascript:initGoogleSyncFile();";
+        sync.href = "javascript:initGoogleSyncFile();displayGoogleDriveOptions();";
         sync.appendChild(document.createTextNode("Setup New Sync"));
         buttonContainer.appendChild(sync);
       }
@@ -158,7 +174,7 @@ function displayGoogleDriveOptions() {
       var picker = document.createElement('a');
       picker.className = "black button";
       //picker.href = "javascript:pickerGoogleDrive()";
-      picker.href = "javascript:createPicker();";
+      picker.href = "javascript:createPicker();closeOptions()";
       picker.appendChild(document.createTextNode("Import Sync File"));
       buttonContainer.appendChild(picker);
     }
@@ -290,10 +306,10 @@ function updateToGoogleDrive(file, data, callback) {
     var multipartRequestBody =
         delimiter +
         'Content-Type: application/json\r\n\r\n' +
-        JSON.stringify(metadata) +
+        JSON.stringify(metadata, null, 1) +
         delimiter +
         'Content-Type: ' + 'application/json' + '\r\n\r\n' +
-        JSON.stringify(data) +
+        JSON.stringify(data, null, 1) +
         close_delim;
 
     // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiclientrequest
@@ -323,9 +339,9 @@ function handleCreateAppFolder(response) {
 function handleCreateSyncFile(response) {
   //console.log(response);
   googleData.syncFile = response;
+  setLastWriteTime();
   updateStoredData('googleData', googleData);
   console.log("Google Drive Data initialized with Local Storage");
-  setLastWriteTime();
   googleSyncInProgress(false);;
   displayGoogleDriveOptions();
 }
@@ -334,21 +350,30 @@ function handleUpdateSyncFile(response) {
   //workoutData = response;
   //updateStoredData('workoutData', workoutData);
   //console.log(response);
-  console.log("Google Drive Data updated with Local Storage")
-  setLastWriteTime();
-  googleSyncInProgress(false);
+   if (response.error == undefined) {
+    console.log("Google Drive Data updated with Local Storage")
+    setLastWriteTime();
+    updateStoredData('googleData', googleData);
+    googleSyncInProgress(false);
+  }
+  else {
+    alert("Error updating Sync File");
+    console.log(response);
+  }
 }
 
 function handleReadSyncFile(response) {
   if (response.error == undefined) {
+    //console.log(response);
     workoutData = response;
     updateStoredData('workoutData', workoutData);
-    //console.log(response);
     console.log("Local Storage updated with Google Drive Data");
     setLastReadTime();
+    updateStoredData('googleData', googleData);
   }
   else {
-    alert("Error reading Sync File")
+    alert("Error reading Sync File");
+    console.log(response);
   }
   googleSyncInProgress(false);;
   printAll();
@@ -361,6 +386,7 @@ function handleImportSyncFile(response) {
     //console.log(response);
     console.log("Local Storage updated with Google Drive Data");
     setLastReadTime();
+    updateStoredData('googleData', googleData);
     googleSyncInProgress(false);
   }
   else {
@@ -497,11 +523,12 @@ function syncToExistingFile(fileId) {
           writeTime : "never"
         }
     }
-    var syncFile = {id : fileId };
-    readSyncFile(syncFile);
+    googleData.syncFile = {id : fileId };
+    getSyncFileMetadata()
+    readSyncFile();
   } else {
     setSigninStatus();
-    alert("Please sign in to Google Drive")
+    alert("Please sign in to Google Drive");
   }
 }
 
@@ -524,22 +551,24 @@ function readSyncFile() {
       googleSyncInProgress(true);
       readFromGoogleDrive(googleData.syncFile, handleReadSyncFile);
   } else {
-      console.log("Google synchronization is not setup.");
+      console.log("Google synchronization is not setup");
   }
 }
 
-function getSyncFileMetadata(syncFile) {
-  readMetaDataFromGoogleDrive(syncFile, handleReadSyncFileMetadata);
+function getSyncFileMetadata() {
+  readMetaDataFromGoogleDrive(googleData.syncFile, handleReadSyncFileMetadata);
 }
 function handleReadSyncFileMetadata(response) {
-  console.log(response);
+  //console.log(response);
   if (response.error == undefined) {
     googleData.syncFile = response;
+    updateStoredData('googleData', googleData)
     var appFolder = {id : googleData.syncFile.parents[0]}
     readMetaDataFromGoogleDrive(appFolder, handleReadAppFolderMetadata)
   }
   else {
     alert ("Error Importing Sync File Metadata");
+    console.log(response);
   }
 
 }
@@ -551,6 +580,7 @@ function handleReadAppFolderMetadata(response) {
   }
   else {
     alert ("Error Importing App Folder Metadata");
+    console.log(response);
   }
   readSyncFile(googleData.syncFile);
 }

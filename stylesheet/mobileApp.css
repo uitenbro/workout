@@ -174,7 +174,7 @@ ul li {
 	color: #777;
 	border-top: 1px solid #B4B4B4;
 	list-style-type: none;
-	padding: 10px 10px 10px 10px;
+	padding: 5px 5px 5px 5px;
 }
 
 /* when you have a first LI item on any list */
@@ -199,7 +199,7 @@ ul li a {
 	white-space: nowrap;
 	overflow: hidden;
 	display: block;
-	padding: 5px 10px 5px 10px;
+	padding: 5px 7px 5px 7px;
 	margin: 0px;
 	-webkit-tap-highlight-color:rgba(0,0,0,0);			
 }
@@ -218,7 +218,23 @@ ul li a.right {
 	text-align: right;
 	margin-top: 0px;
 }
-
+ul li a.table-right {
+	float: right;
+	text-align: right;
+	margin-top: 0px;
+	width: 75px;
+}
+ul li a.table-left {
+	float: left;
+	text-align: right;
+	margin-top: 0px;
+	width: 40px;
+}
+ul li a.table-middle {
+	text-align: right;
+	margin-top: 0px;
+	width: 60px;
+}
 /* option panel */
 
 
@@ -315,7 +331,6 @@ div#options h2 a {
 					margin-left: -6px;
 					width: 104%;
 				}
-
 				ul li input[type="checkbox"], ul li input[type="radio"] {
 					margin: 0px;
 					color: rgb(50,79,133);
