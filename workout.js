@@ -19,7 +19,7 @@ function readStoredData() {
 }
 
 function updateStoredData(item, value) {
-    localStorage.setItem(item, JSON.stringify(value));
+    localStorage.setItem(item, JSON.stringify(value, null, 1));
     if (item != 'googleData' && googleData != null) {
         updateSyncFile();
     }
@@ -227,35 +227,52 @@ function printExercise(dayNum, exerNum) {
     var dayData = workoutData.days[dayNum%(workoutData.days.length)];
     var exercise = dayData.exercises[exerNum];
     //console.log(exercise);
+    
     var ul = document.createElement('ul')
-    var li = document.createElement('li')
+
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.className = "right";
+    a.href = "javascript:displayTonnageOptions("+dayNum+","+exerNum+")";
+    if (typeof exercise.tonnageHistory != 'undefined') {
+        a.appendChild(document.createTextNode("m:"+exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax+
+            " v:"+exercise.tonnageHistory[exercise.tonnageHistory.length-1].overallTonnage));
+    } else {
+        a.appendChild(document.createTextNode("m:??? v:?????"));
+    }
+    li.appendChild(a);
+
     var a = document.createElement('a');
     a.className = "main"
     a.href = "javascript:displayWeightOptions("+dayNum+","+exerNum+")";
     a.appendChild(document.createTextNode(exercise.exerciseName))
     li.appendChild(a);
+
+
     ul.appendChild(li);
 
     for (j in exercise.sets) {
-        var li = document.createElement('li'); 
-        var a = document.createElement('a');
-        a.className = "right"
-        a.href = "javascript:displayWeightOptions("+dayNum+","+exerNum+")";
-        if (exercise.sets[j].weight != "") {
-            a.appendChild(document.createTextNode(exercise.sets[j].weight));
-        }
-        else {
-            a.appendChild(document.createTextNode("enter weight"));
-        }
-        li.appendChild(a);
-        ul.appendChild(li);
+        if (exercise.sets[j].label != "") {
+            var li = document.createElement('li'); 
+            var a = document.createElement('a');
+            a.className = "right"
+            a.href = "javascript:displayWeightOptions("+dayNum+","+exerNum+")";
+            if (exercise.sets[j].weight != "") {
+                a.appendChild(document.createTextNode(exercise.sets[j].weight));
+            }
+            else {
+                a.appendChild(document.createTextNode("enter weight"));
+            }
+            li.appendChild(a);
+            ul.appendChild(li);
 
-        var a = document.createElement('a');
-        a.className = ""
-        a.href = "javascript:displayWeightOptions("+dayNum+","+exerNum+")";
-        a.appendChild(document.createTextNode(exercise.sets[j].label))
-        li.appendChild(a);
-        ul.appendChild(li);
+            var a = document.createElement('a');
+            a.className = ""
+            a.href = "javascript:displayWeightOptions("+dayNum+","+exerNum+")";
+            a.appendChild(document.createTextNode(exercise.sets[j].label))
+            li.appendChild(a);
+            ul.appendChild(li);
+        }
     }
     return ul;
 }
@@ -269,8 +286,8 @@ function completeDay(dayNum) {
 }
 function resetToday() {
     //console.log("Reset");
-    workoutData.curentDay = 0;
-    updateStoredData('workoutDay', workoutData)
+    workoutData.currentDay = 0;
+    updateStoredData('workoutData', workoutData)
     printHeader(0);
     printMain(0);
 }
@@ -370,6 +387,7 @@ function updateLocalData (dayNum) {
 
     } catch(error) {
         alert(error); // annunciate error without changing anything
+        //displayLocalDataOptions(dayNum);
     }
     // Ensure the new workout data was turned into an object and then update it
     if (newWorkoutData != undefined) {
@@ -439,7 +457,8 @@ function displayWeightOptions(dayNum, exerNum) {
     li.appendChild(a);
     form.appendChild(li);
     
-    for (j in dayData.exercises[exerNum].sets) {
+    //print each row and one extra for defining new sets
+    for (j=0; j<dayData.exercises[exerNum].sets.length+1; j++) {
         var li = document.createElement('li');
         var a = document.createElement('a');
         a.className = "right";
@@ -447,8 +466,12 @@ function displayWeightOptions(dayNum, exerNum) {
         weightInput.style.textAlign = "right";
         weightInput.type = "text";
         weightInput.name = "weight["+j+"]";
-        weightInput.value = dayData.exercises[exerNum].sets[j].weight;
-        //console.log(weightInput.value,dayData.exercises[exerNum].sets[j].weight);
+        if (j < dayData.exercises[exerNum].sets.length) {
+            weightInput.value = dayData.exercises[exerNum].sets[j].weight;
+            //console.log(weightInput.value,dayData.exercises[exerNum].sets[j].weight);
+        } else {
+            weightInput.value = "";
+        }
         a.appendChild(weightInput);
         li.appendChild(a);
 
@@ -456,8 +479,12 @@ function displayWeightOptions(dayNum, exerNum) {
         var labelInput = document.createElement('input');
         labelInput.type = "text";
         labelInput.name = "label["+j+"]";
-        labelInput.value = dayData.exercises[exerNum].sets[j].label;
-        //a.appendChild(document.createTextNode(dayData.exercises[exerNum].sets[j].label));
+        if (j < dayData.exercises[exerNum].sets.length) {
+            labelInput.value = dayData.exercises[exerNum].sets[j].label;
+            //a.appendChild(document.createTextNode(dayData.exercises[exerNum].sets[j].label));
+        } else {
+            labelInput.value = "";
+        }
         a.appendChild(labelInput);
         li.appendChild(a);
         form.appendChild(li);
@@ -488,13 +515,343 @@ function updateWeights (dayNum, exerNum) {
     //console.log("update weights" + dayNum + " " + exerNum);
     dayNum = dayNum % workoutData.days.length;
     workoutData.days[dayNum].exercises[exerNum].exerciseName = document.forms['updateWeight']['exerciseName['+exerNum+']'].value
-    for (i in workoutData.days[dayNum].exercises[exerNum].sets) {
+    var setsLengthPlusOne = workoutData.days[dayNum].exercises[exerNum].sets.length+1
+    // check each row and one additional row for new set definition
+    for (i=0; i<setsLengthPlusOne; i++) {
         //console.log("during "+document.forms['updateWeight']['weight['+i+']'].value)
-        workoutData.days[dayNum].exercises[exerNum].sets[i].weight = document.forms['updateWeight']['weight['+i+']'].value;
-        workoutData.days[dayNum].exercises[exerNum].sets[i].label = document.forms['updateWeight']['label['+i+']'].value;
+        if (i < workoutData.days[dayNum].exercises[exerNum].sets.length) {
+            workoutData.days[dayNum].exercises[exerNum].sets[i].weight = document.forms['updateWeight']['weight['+i+']'].value;
+            workoutData.days[dayNum].exercises[exerNum].sets[i].label = document.forms['updateWeight']['label['+i+']'].value;
+        } else if (document.forms['updateWeight']['weight['+i+']'].value!="" || document.forms['updateWeight']['label['+i+']'].value!="") {
+            workoutData.days[dayNum].exercises[exerNum].sets.push({"weight":document.forms['updateWeight']['weight['+i+']'].value,"label":document.forms['updateWeight']['label['+i+']'].value})
+        }
     }
     updateStoredData('workoutData', workoutData);
 }
+
+
+function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
+    //console.log(workoutData)
+    //TODO: consider https://70sbig.com/blog/2012/05/prilepins-chart/
+    //TODO: Add graphing of history
+    //TODO: record only latest save each day (one save per day)
+    //TODO: combine weight update and tonnage options
+    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    //console.log(dayData)
+    var exercise = dayData.exercises[exerNum];
+    
+    tonnageUpdate = document.createElement('div')
+    tonnageUpdate.id = "options";
+    tonnageUpdate.className = "optionpanel";
+    tonnageUpdate.style.display = "block"
+
+    // Cancel
+    var cancel = document.createElement('a');
+    var img = document.createElement('img');
+    img.src = "images/cancel.png";
+    cancel.appendChild(img);
+    cancel.href = "javascript:closeOptions();";
+    //weightUpdate.appendChild(cancel);
+
+    var h2 = document.createElement('h2');
+    h2.appendChild(cancel);
+    h2.appendChild(document.createTextNode(dayData.dayName));
+    tonnageUpdate.appendChild(h2);
+
+    var ul = document.createElement('ul');
+
+    // tonnage
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.className = "right";
+    a.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
+    var bodyWeightText = "";
+    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined') {
+        if (workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 0) {
+            bodyWeightText = "+"+workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
+        }   
+    }
+
+    if (typeof exercise.tonnageHistory != 'undefined') {
+        a.appendChild(document.createTextNode("m:"+exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax+ bodyWeightText +
+            " v:"+exercise.tonnageHistory[exercise.tonnageHistory.length-1].overallTonnage));
+    } else {
+        a.appendChild(document.createTextNode("m:??? v:?????"));
+    }
+    li.appendChild(a);
+
+    // Exercise Data
+    var a = document.createElement('a')
+    a.className = "main";
+    a.appendChild(document.createTextNode(exercise.exerciseName));
+    li.appendChild(a);
+    ul.appendChild(li);
+    
+    //print each row from sets
+    for (j=0; j<dayData.exercises[exerNum].sets.length; j++) {
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.className = "right";
+        a.appendChild(document.createTextNode(exercise.sets[j].weight));
+        li.appendChild(a);
+
+        var a = document.createElement('a');
+        a.appendChild(document.createTextNode(exercise.sets[j].label));
+        li.appendChild(a);
+   
+        ul.appendChild(li)
+    }
+    tonnageUpdate.appendChild(ul);
+    
+    // tonnage form
+    var ul = document.createElement('ul');
+    var form = document.createElement('form');
+    //form.method = "post";
+    //form.action = "javascript:updateForecastSettings(forecastSettings)";
+    form.name = "updateTonnage";
+    form.addEventListener("change",function (e) 
+        {
+        //console.log("Form has changed",e,form);
+        var sendTonnageFormData = [[0,0,0],
+                    [0,0,0],
+                    [0,0,0],
+                    [0,0,0],
+                    [0,0,0]]; ;
+        for (i=0; i<5; i++) {
+            for (j=0; j<3; j++) {
+                sendTonnageFormData[i][j] = form.elements["tonnageInput["+i+"]["+j+"]"].value;
+            }
+        }
+        displayTonnageOptions(dayNum, exerNum, sendTonnageFormData);
+        }
+    );
+
+    // dayNum
+    var dayNumInput = document.createElement('input');
+    dayNumInput.value = dayNum;
+    dayNumInput.type = "hidden";
+    dayNumInput.name = "dayNum";
+    form.appendChild(dayNumInput);
+
+    // exerNum
+    var exerNumInput = document.createElement('input');
+    exerNumInput.value = exerNum;
+    exerNumInput.type = "hidden";
+    exerNumInput.name = "exerNum";
+    form.appendChild(exerNumInput);
+
+    if (typeof tonnageFormData != 'undefined') {
+        var tonnageInput = tonnageFormData
+    } else if (typeof exercise.tonnageInput != 'undefined') {
+          var tonnageInput = exercise.tonnageInput;
+    } else {
+          var tonnageInput = [[0,0,0],
+                    [0,0,0],
+                    [0,0,0],
+                    [0,0,0],
+                    [0,0,0]];
+    }
+    
+    var tonnageOutput = [];
+    var overallTonnage = 0;
+    var overallReps = 0;
+    var overallSets = 0;
+    var equivalentMax = 0;
+    // calculate max and tonnage
+    for (i in tonnageInput) {
+        tonnageOutput[i] = tonnageInput[i][0] * tonnageInput[i][1] * tonnageInput[i][2];
+        overallTonnage = overallTonnage + tonnageOutput[i];
+        overallReps = overallReps + (tonnageInput[i][0] * tonnageInput[i][1]);
+        overallSets = overallSets + parseInt(tonnageInput[i][0]);
+
+        var bodyWeight = 0;
+        if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined') {
+            bodyWeight = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight
+        }
+        // Equivalent Max Calc https://en.wikipedia.org/wiki/One-repetition_maximum Epley formula
+        if (tonnageInput[i][1] > 1) {
+            var weight = parseInt(bodyWeight) + parseInt(tonnageInput[i][2]);
+            var equivalentCandidate = Math.round(weight * (1 + (parseInt(tonnageInput[i][1])/30)), 2);
+            equivalentCandidate = equivalentCandidate - bodyWeight;
+        } else {
+            var equivalentCandidate = tonnageInput[i][2];
+        }
+        if (equivalentCandidate > equivalentMax) {equivalentMax = equivalentCandidate};
+        //console.log("row["+i+"] eqMax "+equivalentCandidate+" tonn: "+tonnageOutput[i]);
+    }
+    //console.log("overall eqMax: "+equivalentMax);
+
+    // Tonnage header row
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.className = "table-right";
+    a.appendChild(document.createTextNode("Vol"));
+    li.appendChild(a);
+
+    var a = document.createElement('a');
+    a.className = "table-right";
+    a.appendChild(document.createTextNode("Max"));
+    li.appendChild(a);
+
+    var a = document.createElement('a');
+    a.className = "table-left";
+    a.appendChild(document.createTextNode("Sets"));
+    li.appendChild(a);
+    
+     var a = document.createElement('a');
+    a.className = "table-left";
+    a.appendChild(document.createTextNode("Reps"));
+    li.appendChild(a);
+
+    li.appendChild(a);   var a = document.createElement('a');
+    a.className = "table-middle";
+    a.appendChild(document.createTextNode("Weight"));
+    li.appendChild(a);
+    form.appendChild(li);
+
+    // rows in tonnage matrix
+    for (i=0; i<5; i++){
+        var li = document.createElement('li')
+        var a = document.createElement('a');
+        a.className = "table-right";
+        if (equivalentMax > 0) {
+            var percentOfMax = Math.round(100 * tonnageInput[i][2] / equivalentMax, 2);
+        } else {
+            var percentOfMax = 0;
+        }
+        a.appendChild(document.createTextNode(tonnageOutput[i]+" lbs"));
+        a.id = "tonnageOutput["+i+"]";
+        li.appendChild(a);
+
+        var a = document.createElement('a');
+        a.appendChild(document.createTextNode(percentOfMax+"%"));
+        a.id = "percentMax["+i+"]";
+        a.className = "table-right";
+        li.appendChild(a);
+
+        for (j=0; j<3; j++) {
+            var a = document.createElement('a');
+            if (j==2) {a.className = "table-middle";} else {a.className = "table-left";};
+            var tonnageInputField = document.createElement('input');
+            tonnageInputField.type = "number";
+            tonnageInputField.style.textAlign = "right";
+            tonnageInputField.name = "tonnageInput["+i+"]["+j+"]";
+            tonnageInputField.value = tonnageInput[i][j];
+            tonnageInputField.addEventListener("focus", function() { this.select(); });
+            a.appendChild(tonnageInputField);
+            li.appendChild(a)
+        }
+
+        form.appendChild(li)
+    }
+
+
+
+    // Tonnage totals row
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.className = "table-right";
+    a.id = "totalTonnage"
+    a.appendChild(document.createTextNode(overallTonnage+" lbs"));
+    li.appendChild(a);
+
+    var a = document.createElement('a');
+    a.className = "table-right";
+    a.id = "eqMax"
+    a.appendChild(document.createTextNode(equivalentMax+" lbs"));
+    li.appendChild(a);
+
+    var a = document.createElement('a');
+    a.className = "table-left";
+    a.id = "totalSets";
+    a.appendChild(document.createTextNode(overallSets));
+    li.appendChild(a);
+
+    var a = document.createElement('a');
+    a.className = "table-left";
+    a.id = "totalReps";
+    if (overallSets>0) {
+        a.appendChild(document.createTextNode(Math.round(overallReps/overallSets,0)));
+    } else {         
+        a.appendChild(document.createTextNode("0"));
+    }
+    li.appendChild(a);
+
+    var a = document.createElement('a');
+    a.className = "table-middle";
+    a.id = "avgWeight";
+    if (overallReps>0) {
+        a.appendChild(document.createTextNode(Math.round(overallTonnage/overallReps,0)+" lbs"));
+    } else {         
+        a.appendChild(document.createTextNode("0 lbs"));
+    }
+    li.appendChild(a);
+
+    
+    form.appendChild(li);
+    ul.appendChild(form);
+    tonnageUpdate.appendChild(ul);
+
+     // Action Buttons
+    var buttonContainer = document.createElement('p');
+
+    // History
+    var calc = document.createElement('a');
+    calc.className = "black button";
+    calc.href = "javascript:showHistory()";
+    calc.appendChild(document.createTextNode("History"));
+    buttonContainer.appendChild(calc);
+
+    // Save
+    var save = document.createElement('a');
+    save.className = "black button";
+    save.href = "javascript:updateTonnage("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+
+        ","+equivalentMax+","+overallTonnage+",);displayDay("+dayNum+")";
+    save.appendChild(document.createTextNode("Save"));
+    buttonContainer.appendChild(save);
+    tonnageUpdate.appendChild(buttonContainer);
+
+    // Add to the page and hide main panel
+    document.getElementById('options').replaceWith(tonnageUpdate);
+    document.getElementById('header').style.display = 'none';
+    document.getElementById('main').style.display = 'none';
+    window.scrollTo(0, 0);
+    
+}
+function updateTonnage (dayNum, exerNum, tonnageInput, equivalentMax, overallTonnage) {
+    //console.log("update weights" + dayNum + " " + exerNum);
+    dayNum = dayNum % workoutData.days.length;
+    var logDate = new Date();
+    //logDate.setDate(logDate.getDate()-1);
+    console.log("logging: date:"+logDate.toISOString()+" eqMax:"+equivalentMax+" tonnage:"+overallTonnage);
+    console.log(tonnageInput);
+
+    if (typeof workoutData.days[dayNum].exercises[exerNum].tonnageInput != 'undefined') {
+        workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
+        workoutData.days[dayNum].exercises[exerNum].tonnageHistory.push({date:logDate.toISOString(), overallTonnage:overallTonnage});
+        workoutData.days[dayNum].exercises[exerNum].maxHistory.push({date:logDate.toISOString(), equivalentMax:equivalentMax})
+    } else {
+        workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
+        workoutData.days[dayNum].exercises[exerNum].tonnageHistory = [{date:logDate.toISOString(), overallTonnage:overallTonnage}];
+        workoutData.days[dayNum].exercises[exerNum].maxHistory = [{date:logDate.toISOString(), equivalentMax:equivalentMax}];
+    }
+    updateStoredData('workoutData', workoutData);
+}
+
+function promptForBodyWeight(dayNum, exerNum, tonnageFormData) {
+    var promptDefault = "";
+    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined') {
+        promptDefault = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
+    }
+    var bodyWeight = prompt("Enter your body weight if it is to be used in the calculation:", promptDefault);
+    if (bodyWeight != null && bodyWeight != "" && !isNaN(parseInt(bodyWeight))) {
+        workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight = parseInt(bodyWeight);
+        updateStoredData('workoutData', workoutData);
+    }
+    console.log("BW: "+workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight);
+    displayTonnageOptions(dayNum, exerNum, tonnageFormData);
+}
+
 function closeOptions() {
     document.getElementById('header').style.display = 'block';
     document.getElementById('main').style.display = 'block';
