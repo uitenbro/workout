@@ -235,10 +235,15 @@ function printExercise(dayNum, exerNum) {
     a.className = "right";
     a.href = "javascript:displayTonnageOptions("+dayNum+","+exerNum+")";
     if (typeof exercise.tonnageHistory != 'undefined') {
-        a.appendChild(document.createTextNode("m:"+exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax+
+        var bodyWeight = 0;
+        if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined' || 
+            workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight > 0) {
+                bodyWeight = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
+        }   
+        a.appendChild(document.createTextNode("m:"+ parseInt(exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax-bodyWeight) +
             " v:"+exercise.tonnageHistory[exercise.tonnageHistory.length-1].overallTonnage));
     } else {
-        a.appendChild(document.createTextNode("m:??? v:?????"));
+        a.appendChild(document.createTextNode("m:- v:-"));
     }
     li.appendChild(a);
 
@@ -539,7 +544,17 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     var dayData = workoutData.days[dayNum%(workoutData.days.length)];
     //console.log(dayData)
     var exercise = dayData.exercises[exerNum];
-    
+    var tonnageOutput = [];
+    var overallTonnage = 0;
+    var overallReps = 0;
+    var overallSets = 0;
+    var equivalentMax = 0;
+    var bodyWeight = 0;
+    var bodyWeighText = "";
+    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined' || 
+        workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight > 0) {
+            bodyWeight = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
+    }
     tonnageUpdate = document.createElement('div')
     tonnageUpdate.id = "options";
     tonnageUpdate.className = "optionpanel";
@@ -564,19 +579,13 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     var li = document.createElement('li');
     var a = document.createElement('a');
     a.className = "right";
-    a.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
-    var bodyWeightText = "";
-    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined') {
-        if (workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 0) {
-            bodyWeightText = "+"+workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
-        }   
-    }
+    //a.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
 
     if (typeof exercise.tonnageHistory != 'undefined') {
-        a.appendChild(document.createTextNode("m:"+exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax+ bodyWeightText +
+        a.appendChild(document.createTextNode("m:"+ parseInt(exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax-bodyWeight) +
             " v:"+exercise.tonnageHistory[exercise.tonnageHistory.length-1].overallTonnage));
     } else {
-        a.appendChild(document.createTextNode("m:??? v:?????"));
+        a.appendChild(document.createTextNode("m:-"+" v:-"));
     }
     li.appendChild(a);
 
@@ -651,30 +660,26 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
                     [0,0,0],
                     [0,0,0]];
     }
-    
-    var tonnageOutput = [];
-    var overallTonnage = 0;
-    var overallReps = 0;
-    var overallSets = 0;
-    var equivalentMax = 0;
+
     // calculate max and tonnage
     for (i in tonnageInput) {
-        tonnageOutput[i] = tonnageInput[i][0] * tonnageInput[i][1] * tonnageInput[i][2];
+        var sets = parseInt(tonnageInput[i][0]);
+        var reps = parseInt(tonnageInput[i][1]);
+        var weight = parseInt(tonnageInput[i][2]) + bodyWeight;
+        tonnageOutput[i] = sets * reps * weight;
         overallTonnage = overallTonnage + tonnageOutput[i];
-        overallReps = overallReps + (tonnageInput[i][0] * tonnageInput[i][1]);
-        overallSets = overallSets + parseInt(tonnageInput[i][0]);
+        overallReps = overallReps + (sets * reps);
+        overallSets = overallSets + sets;
 
-        var bodyWeight = 0;
-        if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined') {
-            bodyWeight = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight
-        }
         // Equivalent Max Calc https://en.wikipedia.org/wiki/One-repetition_maximum Epley formula
-        if (tonnageInput[i][1] > 1) {
-            var weight = parseInt(bodyWeight) + parseInt(tonnageInput[i][2]);
-            var equivalentCandidate = Math.round(weight * (1 + (parseInt(tonnageInput[i][1])/30)), 2);
-            equivalentCandidate = equivalentCandidate - bodyWeight;
-        } else {
-            var equivalentCandidate = tonnageInput[i][2];
+        if (sets*reps > 1) {
+            var equivalentCandidate = Math.round(weight * (1 + reps/30), 2);
+        }
+        else if (sets*reps == 1) {
+            equivalentCandidate = weight;
+        }
+        else { // no reps
+            equivalentCandidate = 0;
         }
         if (equivalentCandidate > equivalentMax) {equivalentMax = equivalentCandidate};
         //console.log("row["+i+"] eqMax "+equivalentCandidate+" tonn: "+tonnageOutput[i]);
@@ -711,14 +716,19 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
 
     // rows in tonnage matrix
     for (i=0; i<5; i++){
+        var sets = parseInt(tonnageInput[i][0]);
+        var reps = parseInt(tonnageInput[i][1]);
+        var weight = parseInt(tonnageInput[i][2]) + bodyWeight;
+
         var li = document.createElement('li')
         var a = document.createElement('a');
         a.className = "table-right";
-        if (equivalentMax > 0) {
-            var percentOfMax = Math.round(100 * tonnageInput[i][2] / equivalentMax, 2);
+        if (equivalentMax > 0 && reps*sets > 0) {
+            var percentOfMax = Math.round(100 * weight / equivalentMax, 2);
         } else {
             var percentOfMax = 0;
         }
+
         a.appendChild(document.createTextNode(tonnageOutput[i]+" lbs"));
         a.id = "tonnageOutput["+i+"]";
         li.appendChild(a);
@@ -745,27 +755,56 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
         form.appendChild(li)
     }
 
-
-
-    // Tonnage totals row
+    // Tonnage totals row and BW row
     var li = document.createElement('li');
+    var bwli = document.createElement('li');
+
     var a = document.createElement('a');
     a.className = "table-right";
     a.id = "totalTonnage"
-    a.appendChild(document.createTextNode(overallTonnage+" lbs"));
+    a.appendChild(document.createTextNode(overallTonnage-overallReps*bodyWeight+" lbs"));
     li.appendChild(a);
+
+    var bwa = document.createElement('a');
+    bwa.className = "table-right";
+    bwa.id = "bwtotalTonnage"
+    bwa.appendChild(document.createTextNode(overallTonnage+" lbs"));
+    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
+    bwli.appendChild(bwa);
 
     var a = document.createElement('a');
     a.className = "table-right";
-    a.id = "eqMax"
-    a.appendChild(document.createTextNode(equivalentMax+" lbs"));
+    a.id = "eqMax";
+    if (overallReps>0) {
+        a.appendChild(document.createTextNode((equivalentMax - bodyWeight) + " lbs"));
+    } else {         
+        a.appendChild(document.createTextNode("0 lbs"));
+    }
     li.appendChild(a);
+
+    var bwa = document.createElement('a');
+    bwa.className = "table-right";
+    bwa.id = "bweqMax";
+    if (overallReps>0) {
+        bwa.appendChild(document.createTextNode(equivalentMax + " lbs"));
+    } else {         
+        bwa.appendChild(document.createTextNode("0 lbs"));
+    }
+    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
+    bwli.appendChild(bwa);
 
     var a = document.createElement('a');
     a.className = "table-left";
     a.id = "totalSets";
     a.appendChild(document.createTextNode(overallSets));
     li.appendChild(a);
+
+    var bwa = document.createElement('a');
+    bwa.className = "table-left";
+    bwa.id = "bwtotalSets";
+    bwa.appendChild(document.createTextNode("BW:"));
+    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
+    bwli.appendChild(bwa);
 
     var a = document.createElement('a');
     a.className = "table-left";
@@ -777,18 +816,36 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     }
     li.appendChild(a);
 
+    var bwa = document.createElement('a');
+    bwa.className = "table-left";
+    bwa.id = "bwtotalReps";   
+    bwa.appendChild(document.createTextNode(""));
+    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
+    bwli.appendChild(bwa);
+
     var a = document.createElement('a');
     a.className = "table-middle";
     a.id = "avgWeight";
     if (overallReps>0) {
-        a.appendChild(document.createTextNode(Math.round(overallTonnage/overallReps,0)+" lbs"));
+        a.appendChild(document.createTextNode(Math.round(overallTonnage/overallReps,0)-bodyWeight+" lbs"));
     } else {         
         a.appendChild(document.createTextNode("0 lbs"));
     }
     li.appendChild(a);
 
+    var bwa = document.createElement('a');
+    bwa.className = "table-middle";
+    bwa.id = "bwavgWeight";
+    if (overallReps>0) {
+        bwa.appendChild(document.createTextNode(bodyWeight+" lbs"));
+    } else {         
+        bwa.appendChild(document.createTextNode("0 lbs"));
+    }
+    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
+    bwli.appendChild(bwa);
     
     form.appendChild(li);
+    form.appendChild(bwli);
     ul.appendChild(form);
     tonnageUpdate.appendChild(ul);
 
