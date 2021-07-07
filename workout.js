@@ -537,9 +537,7 @@ function updateWeights (dayNum, exerNum) {
 
 function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     //console.log(workoutData)
-    //TODO: consider https://70sbig.com/blog/2012/05/prilepins-chart/
     //TODO: Add graphing of history
-    //TODO: record only latest save each day (one save per day)
     //TODO: combine weight update and tonnage options
     var dayData = workoutData.days[dayNum%(workoutData.days.length)];
     //console.log(dayData)
@@ -802,7 +800,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     var bwa = document.createElement('a');
     bwa.className = "table-left";
     bwa.id = "bwtotalSets";
-    bwa.appendChild(document.createTextNode("BW:"));
+    bwa.appendChild(document.createTextNode("BW"))
     bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
     bwli.appendChild(bwa);
 
@@ -819,7 +817,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     var bwa = document.createElement('a');
     bwa.className = "table-left";
     bwa.id = "bwtotalReps";   
-    bwa.appendChild(document.createTextNode(""));
+    bwa.appendChild(document.createTextNode("adj:"));
     bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
     bwli.appendChild(bwa);
 
@@ -852,13 +850,6 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
      // Action Buttons
     var buttonContainer = document.createElement('p');
 
-    // History
-    var calc = document.createElement('a');
-    calc.className = "black button";
-    calc.href = "javascript:showHistory()";
-    calc.appendChild(document.createTextNode("History"));
-    buttonContainer.appendChild(calc);
-
     // Save
     var save = document.createElement('a');
     save.className = "black button";
@@ -867,6 +858,21 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     save.appendChild(document.createTextNode("Save"));
     buttonContainer.appendChild(save);
     tonnageUpdate.appendChild(buttonContainer);
+
+    // History
+    var calc = document.createElement('a');
+    calc.className = "black button";
+    calc.href = "javascript:showHistory()";
+    calc.appendChild(document.createTextNode("History"));
+    buttonContainer.appendChild(calc);
+
+    // Reference
+    var calc = document.createElement('a');
+    calc.className = "black button";
+    calc.href = "Prilepins-Chart.png";
+    calc.target = "_blank";
+    calc.appendChild(document.createTextNode("Reference"));
+    buttonContainer.appendChild(calc);
 
     // Add to the page and hide main panel
     document.getElementById('options').replaceWith(tonnageUpdate);
@@ -880,13 +886,25 @@ function updateTonnage (dayNum, exerNum, tonnageInput, equivalentMax, overallTon
     dayNum = dayNum % workoutData.days.length;
     var logDate = new Date();
     //logDate.setDate(logDate.getDate()-1);
-    console.log("logging: date:"+logDate.toISOString()+" eqMax:"+equivalentMax+" tonnage:"+overallTonnage);
-    console.log(tonnageInput);
+    //console.log("logging: date:"+logDate.toISOString()+" eqMax:"+equivalentMax+" tonnage:"+overallTonnage);
+    //console.log(tonnageInput);
 
     if (typeof workoutData.days[dayNum].exercises[exerNum].tonnageInput != 'undefined') {
-        workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
-        workoutData.days[dayNum].exercises[exerNum].tonnageHistory.push({date:logDate.toISOString(), overallTonnage:overallTonnage});
-        workoutData.days[dayNum].exercises[exerNum].maxHistory.push({date:logDate.toISOString(), equivalentMax:equivalentMax})
+        var lastIndex = workoutData.days[dayNum].exercises[exerNum].tonnageHistory.length - 1;
+        var lastDate = new Date(workoutData.days[dayNum].exercises[exerNum].tonnageHistory[lastIndex].date);
+        // if the last log entry was more than an hour ago log a new entry otherwise replace it
+        //console.log("last", lastDate, "log", logDate, "diff", (logDate - lastDate));
+        if ((logDate - lastDate) > 60*60*1000) { // 60min * 60sec/min * 1000msec/sec
+            workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
+            workoutData.days[dayNum].exercises[exerNum].tonnageHistory.push({date:logDate.toISOString(), overallTonnage:overallTonnage});
+            workoutData.days[dayNum].exercises[exerNum].maxHistory.push({date:logDate.toISOString(), equivalentMax:equivalentMax})
+        }
+        else {
+            workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
+            workoutData.days[dayNum].exercises[exerNum].tonnageHistory[lastIndex] = {date:logDate.toISOString(), overallTonnage:overallTonnage};
+            workoutData.days[dayNum].exercises[exerNum].maxHistory[lastIndex]= {date:logDate.toISOString(), equivalentMax:equivalentMax}
+        }
+        
     } else {
         workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
         workoutData.days[dayNum].exercises[exerNum].tonnageHistory = [{date:logDate.toISOString(), overallTonnage:overallTonnage}];
