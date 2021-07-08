@@ -862,7 +862,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     // History
     var calc = document.createElement('a');
     calc.className = "black button";
-    calc.href = "javascript:showHistory()";
+    calc.href = "javascript:displayTonnageHistory("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+")";
     calc.appendChild(document.createTextNode("History"));
     buttonContainer.appendChild(calc);
 
@@ -925,6 +925,56 @@ function promptForBodyWeight(dayNum, exerNum, tonnageFormData) {
     }
     console.log("BW: "+workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight);
     displayTonnageOptions(dayNum, exerNum, tonnageFormData);
+}
+
+function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
+    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum]) {
+        var exercise = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum];
+        
+                var graph = document.createElement('div');
+        graph.id = "options";
+        graph.className = "optionpanel";
+        graph.style.display = "block";
+
+        // Cancel
+        var cancel = document.createElement('a');
+        var img = document.createElement('img');
+        img.src = "images/cancel.png";
+        cancel.appendChild(img);
+        cancel.href = "javascript:closeOptions();";
+        var h2 = document.createElement('h2');
+        h2.appendChild(cancel);
+        h2.appendChild(document.createTextNode("\xA0"));
+        graph.appendChild(h2);
+
+        var ul = document.createElement('ul');
+        var li2 = document.createElement('li')
+        var plotMaxdiv = document.createElement('div');
+        plotMaxdiv.id = 'Max';
+        li2.appendChild(plotMaxdiv);
+        ul.appendChild(li2);
+
+        var li1 = document.createElement('li')
+        var plotTonnagediv = document.createElement('div');
+        plotTonnagediv.id = 'Tonnage';
+        li1.appendChild(plotTonnagediv);
+        ul.appendChild(li1);
+
+        graph.appendChild(ul);
+
+        // Add to the page and hide main panel
+        document.getElementById('options').replaceWith(graph);
+        document.getElementById('header').style.display = 'none';
+        document.getElementById('main').style.display = 'none';
+        window.scrollTo(0, 0);
+
+        printVerticalStripChart('Tonnage', exercise.tonnageHistory);
+        printVerticalStripChart('Max', exercise.maxHistory);
+
+    }
+    else {
+        displayTonnageOptions(dayNum, exerNum, tonnageFormData);
+    }
 }
 
 function closeOptions() {
