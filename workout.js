@@ -923,7 +923,7 @@ function promptForBodyWeight(dayNum, exerNum, tonnageFormData) {
         workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight = parseInt(bodyWeight);
         updateStoredData('workoutData', workoutData);
     }
-    console.log("BW: "+workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight);
+    //console.log("BW: "+workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight);
     displayTonnageOptions(dayNum, exerNum, tonnageFormData);
 }
 
@@ -941,7 +941,7 @@ function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
         var img = document.createElement('img');
         img.src = "images/cancel.png";
         cancel.appendChild(img);
-        cancel.href = "javascript:closeOptions();";
+        cancel.href = "javascript:displayTonnageOptions("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+");";
         var h2 = document.createElement('h2');
         h2.appendChild(cancel);
         h2.appendChild(document.createTextNode("\xA0"));
@@ -1061,5 +1061,3 @@ function resetWorkout() {
     clearStoredData('workoutData');
     init();
 }
-
-

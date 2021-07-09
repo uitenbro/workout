@@ -37,7 +37,8 @@
     }
    
     var minHeight = 300; //40 + (20 * dataArray.length)
-
+    var yAxisMax = Math.ceil(1.1 * dataArray[dataArray.length-1][1]/10) * 10; //10% padding to allow for label
+    var yAxisMin = Math.floor(0.9 * dataArray[0][1]/10) * 10; //10% padding to allow for label
     //console.log(dataArray);
 
     //var plot = $.jqplot(divLocation, [black, dataArray], {
@@ -59,9 +60,10 @@
         series: [
             {
                 showMarker: true,
-                pointLabels: {labels: labelsArray, show: true, location: 'nw', edgeTolerance: -5 },
-            }
+                pointLabels: {labels: labelsArray, show: true, location: 'nw'}, // ypadding: 2 }, edgeTolerance: -5,
+            },
         ],
+        //axesDefaults: {pad:1.5},
         axes: {
             // Use x2axis to put the labels on top
             xaxis: {
@@ -77,15 +79,8 @@
                 },
             },
             yaxis: {
-                pad: 2,
-        //         renderer: $.jqplot.CategoryAxisRenderer,
-        //         tickOptions: {
-        //             //angle: -40,
-        //             show: true,
-        //         }, 
-        //         rendererOptions: {
-        //             tickRenderer:$.jqplot.CanvasAxisTickRenderer,
-        //         },              
+                max:yAxisMax,
+                min:yAxisMin           
             },
         },
     });
