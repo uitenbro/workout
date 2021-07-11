@@ -854,7 +854,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     var save = document.createElement('a');
     save.className = "black button";
     save.href = "javascript:updateTonnage("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+
-        ","+equivalentMax+","+overallTonnage+",);displayDay("+dayNum+")";
+        ","+equivalentMax+","+overallTonnage+",);displayTonnageOptions("+dayNum+","+exerNum+")";
     save.appendChild(document.createTextNode("Save"));
     buttonContainer.appendChild(save);
     tonnageUpdate.appendChild(buttonContainer);

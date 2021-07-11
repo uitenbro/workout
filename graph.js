@@ -11,6 +11,8 @@
     var dataArray = [];
     var labelsArray = [];
     //var black = [];
+    var yMin = 0;
+    var yMax = 0; 
 
     for (var i=0; i<inputArray.length; i++) {
         var date = new Date(inputArray[i].date);
@@ -21,10 +23,14 @@
         if (typeof inputArray[i].overallTonnage != 'undefined') {
             dataArray[i] = [date, inputArray[i].overallTonnage];
             labelsArray[i] = ""; //inputArray[i].overallTonnage;
+            if (inputArray[i].overallTonnage > yMax || i==0) {yMax = inputArray[i].overallTonnage;}
+            if (inputArray[i].overallTonnage < yMin || i==0) {yMin = inputArray[i].overallTonnage;}
         }
         else if (typeof inputArray[i].equivalentMax != 'undefined') {
             labelsArray[i] = ""; // inputArray[i].equivalentMax;
             dataArray[i] = [date, inputArray[i].equivalentMax];
+            if (inputArray[i].equivalentMax > yMax || i==0) {yMax = inputArray[i].equivalentMax;}
+            if (inputArray[i].equivalentMax < yMin || i==0) {yMin = inputArray[i].equivalentMax;}
         }
         // black[i] = [0,dataArray[i][1]]; // zero axis
     }
@@ -37,8 +43,10 @@
     }
    
     var minHeight = 300; //40 + (20 * dataArray.length)
-    var yAxisMax = Math.ceil(1.1 * dataArray[dataArray.length-1][1]/10) * 10; //10% padding to allow for label
-    var yAxisMin = Math.floor(0.9 * dataArray[0][1]/10) * 10; //10% padding to allow for label
+    var yRange = yMax - yMin;
+    if (yRange < 10) {yRange = 10;}
+    var yAxisMax = Math.ceil((yMax + 0.2 * yRange)/10) * 10; //10% padding to allow for label
+    var yAxisMin = Math.floor((yMin - 0.1 * yRange)/10) * 10; //10% padding to allow for label
     //console.log(dataArray);
 
     //var plot = $.jqplot(divLocation, [black, dataArray], {
