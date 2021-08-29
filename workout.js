@@ -296,6 +296,21 @@ function resetToday() {
     printHeader(0);
     printMain(0);
 }
+function clearHistory() {
+    var daysToSave = prompt("Save history from ___ day(s) before today. (Enter 0 to clear all history):", "");
+    if (daysToSave != null && daysToSave != "" && !isNaN(parseInt(daysToSave))) {
+        daysToSave = parseInt(daysToSave); 
+        for (dayNum=0; dayNum<workoutData.days.length; dayNum++) { 
+            for (exerNum=0;  exerNum<workoutData.days[dayNum].exercises.length; exerNum++) {
+                //console.log(dayNum,exerNum)
+                clearExerciseHistory(dayNum, exerNum, daysToSave, saveImmediately = false); 
+            }
+        }
+    }
+    updateStoredData('workoutData', workoutData)
+    printHeader(0);
+    printMain(0);
+}
 function browsePrevious(dayNum) {
     //console.log("Previous");
     if (dayNum>0) {
@@ -316,6 +331,48 @@ function displayDay(dayNum) {
     printHeader(dayNum);
     printMain(dayNum);
     closeOptions();
+}
+
+function clearExerciseHistory(dayNum, exerNum, daysToSave, saveImmediately = true) {
+    var exercise = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum];
+    var thresholdDate = new Date() 
+    thresholdDate.setDate(thresholdDate.getDate() - daysToSave)
+    //console.log("daysToSave:", daysToSave)
+    console.log("thresholdDate:", (thresholdDate))
+
+    if (typeof exercise.tonnageHistory != 'undefined') {
+        var testDate = new Date(exercise.tonnageHistory[0].date)
+        while (testDate < thresholdDate) {
+            console.log("tonnDate:", exercise.tonnageHistory[0].date, "cleared")
+            exercise.tonnageHistory.shift()
+            if (exercise.tonnageHistory.length) {
+                testDate = new Date(exercise.tonnageHistory[0].date)
+            }
+            else {
+                testDate= new Date()
+                delete exercise["tonnageHistory"]
+            }
+        }
+    }
+
+    if (typeof exercise.maxHistory != 'undefined') {
+        var testDate = new Date(exercise.maxHistory[0].date)
+        while (testDate < thresholdDate) {
+            console.log("maxDate:", (exercise.maxHistory[0].date), " cleared")
+            exercise.maxHistory.shift()
+            if (exercise.maxHistory.length) {
+                testDate = new Date(exercise.maxHistory[0].date)
+            }
+            else {
+                testDate= new Date()
+                delete exercise["maxHistory"]
+            }
+        }
+    }
+    workoutData.days[dayNum % workoutData.days.length].exercises[exerNum] = exercise
+    if (saveImmediately == true) {
+        updateStoredData('workoutData', workoutData)
+    }
 }
 
 function displayLocalDataOptions(dayNum, exerNum) {
@@ -507,6 +564,14 @@ function displayWeightOptions(dayNum, exerNum) {
     save.href = "javascript:updateWeights("+dayNum+","+exerNum+");displayDay("+dayNum+")";
     save.appendChild(document.createTextNode("Save"));
     buttonContainer.appendChild(save);
+
+    // Cancel
+    var cancel = document.createElement('a');
+    cancel.className = "black button";
+    cancel.href = "javascript:closeOptions();";
+    cancel.appendChild(document.createTextNode("Cancel"));
+    buttonContainer.appendChild(cancel);
+
     weightUpdate.appendChild(buttonContainer);
 
     // Add to the page and hide main panel
@@ -866,6 +931,13 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     calc.appendChild(document.createTextNode("History"));
     buttonContainer.appendChild(calc);
 
+    // Clear History
+    var clear = document.createElement('a');
+    clear.className = "black button";
+    clear.href = "javascript:promptForDaysToClear("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+")";
+    clear.appendChild(document.createTextNode("Clear History"));
+    buttonContainer.appendChild(clear);
+
     // Reference
     var calc = document.createElement('a');
     calc.className = "black button";
@@ -873,6 +945,13 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     calc.target = "_blank";
     calc.appendChild(document.createTextNode("Reference"));
     buttonContainer.appendChild(calc);
+
+    // Cancel
+    var cancel = document.createElement('a');
+    cancel.className = "black button";
+    cancel.href = "javascript:closeOptions();";
+    cancel.appendChild(document.createTextNode("Cancel"));
+    buttonContainer.appendChild(cancel);
 
     // Add to the page and hide main panel
     document.getElementById('options').replaceWith(tonnageUpdate);
@@ -889,7 +968,9 @@ function updateTonnage (dayNum, exerNum, tonnageInput, equivalentMax, overallTon
     //console.log("logging: date:"+logDate.toISOString()+" eqMax:"+equivalentMax+" tonnage:"+overallTonnage);
     //console.log(tonnageInput);
 
-    if (typeof workoutData.days[dayNum].exercises[exerNum].tonnageInput != 'undefined') {
+    if ((typeof workoutData.days[dayNum].exercises[exerNum].tonnageInput != 'undefined') && 
+        (typeof workoutData.days[dayNum].exercises[exerNum].tonnageHistory != 'undefined') && 
+        (typeof workoutData.days[dayNum].exercises[exerNum].maxHistory != 'undefined')) {
         var lastIndex = workoutData.days[dayNum].exercises[exerNum].tonnageHistory.length - 1;
         var lastDate = new Date(workoutData.days[dayNum].exercises[exerNum].tonnageHistory[lastIndex].date);
         // if the last log entry was more than an hour ago log a new entry otherwise replace it
@@ -927,11 +1008,20 @@ function promptForBodyWeight(dayNum, exerNum, tonnageFormData) {
     displayTonnageOptions(dayNum, exerNum, tonnageFormData);
 }
 
+function promptForDaysToClear(dayNum, exerNum) {
+    var daysToSave = prompt("Save history from ___ day(s) before today. (Enter 0 to clear all history):", "");
+    if (daysToSave != null && daysToSave != "" && !isNaN(parseInt(daysToSave))) {
+        daysToSave = parseInt(daysToSave);
+        clearExerciseHistory(dayNum, exerNum, daysToSave);
+    }
+    //clearExerciseHistory(exercise, daysToSave);
+}
+
 function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
     if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum]) {
         var exercise = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum];
         
-                var graph = document.createElement('div');
+        var graph = document.createElement('div');
         graph.id = "options";
         graph.className = "optionpanel";
         graph.style.display = "block";
@@ -968,8 +1058,20 @@ function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
         document.getElementById('main').style.display = 'none';
         window.scrollTo(0, 0);
 
-        printVerticalStripChart('Tonnage', exercise.tonnageHistory);
-        printVerticalStripChart('Max', exercise.maxHistory);
+        if ((typeof exercise.tonnageHistory != 'undefined') && (typeof exercise.maxHistory != 'undefined')) {
+            printVerticalStripChart('Tonnage', exercise.tonnageHistory);
+            printVerticalStripChart('Max', exercise.maxHistory);
+        }
+
+        var buttonContainer = document.createElement('p');
+
+        // Cancel
+        var cancel = document.createElement('a');
+        cancel.className = "black button";
+        cancel.href = "javascript:closeOptions();";
+        cancel.appendChild(document.createTextNode("Cancel"));
+        buttonContainer.appendChild(cancel);
+        graph.appendChild(buttonContainer);
 
     }
     else {
@@ -1030,6 +1132,14 @@ function showWorkoutOptions(dayNum) {
     info.className = "black button";
     info.href = "javascript:resetWorkout();displayDay(0)";
     info.appendChild(document.createTextNode("Reset Workout"));
+    buttonContainer.appendChild(info);
+    workoutOptions.appendChild(buttonContainer);
+
+    // Clear History
+    var info = document.createElement('a');
+    info.className = "black button";
+    info.href = "javascript:clearHistory();displayDay(0)";
+    info.appendChild(document.createTextNode("Clear History"));
     buttonContainer.appendChild(info);
     workoutOptions.appendChild(buttonContainer);
 
