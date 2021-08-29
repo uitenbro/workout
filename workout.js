@@ -297,7 +297,7 @@ function resetToday() {
     printMain(0);
 }
 function clearHistory() {
-    var daysToSave = prompt("Save history from ___ day(s) before today. (Enter 0 to clear all history):", "");
+    var daysToSave = prompt("Clear historical data older than ___ day(s) old. (Enter 0 to clear all history):", "");
     if (daysToSave != null && daysToSave != "" && !isNaN(parseInt(daysToSave))) {
         daysToSave = parseInt(daysToSave); 
         for (dayNum=0; dayNum<workoutData.days.length; dayNum++) { 
@@ -1009,7 +1009,7 @@ function promptForBodyWeight(dayNum, exerNum, tonnageFormData) {
 }
 
 function promptForDaysToClear(dayNum, exerNum) {
-    var daysToSave = prompt("Save history from ___ day(s) before today. (Enter 0 to clear all history):", "");
+    var daysToSave = prompt("Clear historical data older than ___ day(s) old. (Enter 0 to clear all history):", "");
     if (daysToSave != null && daysToSave != "" && !isNaN(parseInt(daysToSave))) {
         daysToSave = parseInt(daysToSave);
         clearExerciseHistory(dayNum, exerNum, daysToSave);
