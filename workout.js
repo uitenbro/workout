@@ -1068,7 +1068,7 @@ function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
         // Cancel
         var cancel = document.createElement('a');
         cancel.className = "black button";
-        cancel.href = "javascript:closeOptions();";
+        cancel.href = "javascript:displayTonnageOptions("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+");";
         cancel.appendChild(document.createTextNode("Cancel"));
         buttonContainer.appendChild(cancel);
         graph.appendChild(buttonContainer);
