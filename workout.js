@@ -628,7 +628,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     var img = document.createElement('img');
     img.src = "images/cancel.png";
     cancel.appendChild(img);
-    cancel.href = "javascript:closeOptions();";
+    cancel.href = "javascript:displayDay("+dayNum+");javascript:closeOptions();";
     //weightUpdate.appendChild(cancel);
 
     var h2 = document.createElement('h2');
@@ -949,7 +949,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     // Cancel
     var cancel = document.createElement('a');
     cancel.className = "black button";
-    cancel.href = "javascript:closeOptions();";
+    cancel.href = "javascript:displayDay("+dayNum+");javascript:closeOptions();";
     cancel.appendChild(document.createTextNode("Cancel"));
     buttonContainer.appendChild(cancel);
 
