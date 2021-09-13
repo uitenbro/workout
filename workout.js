@@ -927,7 +927,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     // History
     var calc = document.createElement('a');
     calc.className = "black button";
-    calc.href = "javascript:displayTonnageHistory("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+")";
+    calc.href = "javascript:displayTonnageHistory("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+", "+bodyWeight+")";
     calc.appendChild(document.createTextNode("History"));
     buttonContainer.appendChild(calc);
 
@@ -1017,7 +1017,7 @@ function promptForDaysToClear(dayNum, exerNum) {
     //clearExerciseHistory(exercise, daysToSave);
 }
 
-function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
+function displayTonnageHistory(dayNum, exerNum, tonnageFormData, bodyWeight) {
     if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum]) {
         var exercise = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum];
         
@@ -1059,8 +1059,8 @@ function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
         window.scrollTo(0, 0);
 
         if ((typeof exercise.tonnageHistory != 'undefined') && (typeof exercise.maxHistory != 'undefined')) {
-            printVerticalStripChart('Tonnage', exercise.tonnageHistory);
-            printVerticalStripChart('Max', exercise.maxHistory);
+            printVerticalStripChart('Tonnage', exercise.tonnageHistory, bodyWeight);
+            printVerticalStripChart('Max', exercise.maxHistory, bodyWeight);
         }
 
         var buttonContainer = document.createElement('p');

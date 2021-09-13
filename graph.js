@@ -1,5 +1,5 @@
 
-    function printVerticalStripChart(divLocation, inputArray) {
+    function printVerticalStripChart(divLocation, inputArray, bodyWeight) {
     // For horizontal bar charts, x and y values must will be "flipped"
     // from their vertical bar counterpart.
     // Array is an array of JSON objects {date:logDate.toISOString(), balance:newBalance}
@@ -28,9 +28,9 @@
         }
         else if (typeof inputArray[i].equivalentMax != 'undefined') {
             labelsArray[i] = ""; // inputArray[i].equivalentMax;
-            dataArray[i] = [date, inputArray[i].equivalentMax];
-            if (inputArray[i].equivalentMax > yMax || i==0) {yMax = inputArray[i].equivalentMax;}
-            if (inputArray[i].equivalentMax < yMin || i==0) {yMin = inputArray[i].equivalentMax;}
+            dataArray[i] = [date, inputArray[i].equivalentMax-bodyWeight];
+            if (inputArray[i].equivalentMax-bodyWeight > yMax || i==0) {yMax = inputArray[i].equivalentMax-bodyWeight;}
+            if (inputArray[i].equivalentMax-bodyWeight < yMin || i==0) {yMin = inputArray[i].equivalentMax-bodyWeight;}
         }
         // black[i] = [0,dataArray[i][1]]; // zero axis
     }
@@ -39,7 +39,7 @@
         labelsArray[labelsArray.length-1] = inputArray[inputArray.length-1].overallTonnage;
     }
     else if (typeof inputArray[0].equivalentMax != 'undefined') {
-        labelsArray[labelsArray.length-1] = inputArray[inputArray.length-1].equivalentMax;
+        labelsArray[labelsArray.length-1] = inputArray[inputArray.length-1].equivalentMax-bodyWeight;
     }
    
     var minHeight = 300; //40 + (20 * dataArray.length)
