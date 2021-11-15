@@ -350,16 +350,16 @@ function handleUpdateSyncFile(response) {
   //workoutData = response;
   //updateStoredData('workoutData', workoutData);
   //console.log(response);
-   if (response.error == undefined) {
+  if (response.error == undefined) {
     console.log("Google Drive Data updated with Local Storage")
     setLastWriteTime();
     updateStoredData('googleData', googleData);
-    googleSyncInProgress(false);
   }
   else {
     alert("Error updating Sync File");
     console.log(response);
   }
+  googleSyncInProgress(false);
 }
 
 function handleReadSyncFile(response) {
