@@ -1,0 +1,9 @@
+1. Navigate to development directory
+2. python3 -m http.server <port number optional>
+3. Enable 3rd party cookies for localhost  - chrome://settings/cookies
+4. Scroll to Sites that can always use cookies hit Add and enter localhost
+5. Add localhost to Google API - https://console.cloud.google.com/apis/credentials
+6. Update OAuth client and API Key with http://localhost:8000
+7. Make sure to hit Save on both pages 
+
+Note: Sometimes the last one added doesn't work right away so add another one or wait.  Eventually it seems to work.
