@@ -387,11 +387,11 @@ function handleImportSyncFile(response) {
     console.log("Local Storage updated with Google Drive Data");
     setLastReadTime();
     updateStoredData('googleData', googleData);
-    googleSyncInProgress(false);
   }
   else {
     alert("Error importing sync file.")
   }
+  googleSyncInProgress(false);
   displayGoogleDriveOptions();
 }
 
@@ -419,6 +419,7 @@ function createPicker() {
   else {
     alert("Please sign in to Google Drive")
   }
+  googleSyncInProgress(false);
 }
 
 function pickerCallback(data) {
@@ -456,6 +457,7 @@ function readMetaDataFromGoogleDrive(file, callback) {
   else {
     setSigninStatus();
     alert("Please sign in to Google Drive");
+    googleSyncInProgress(false);
   }
 }
 
@@ -486,6 +488,7 @@ function readFromGoogleDrive(file, callback) {
   else {
     setSigninStatus();
     alert("Please sign in to Google Drive");
+    googleSyncInProgress(false);
   }
 }
 
@@ -506,10 +509,12 @@ function initGoogleSyncFile() {
         //alert ("Couldn't find existing sync file. A new sync file is being created"); 
     } else {
       alert("Synchronization is already setup.  Reset Sync to start over.");
+      googleSyncInProgress(false);
     }
   } else {
     setSigninStatus();
     alert("Please sign in to Google Drive")
+    googleSyncInProgress(false);
   }
 }
 
@@ -529,6 +534,7 @@ function syncToExistingFile(fileId) {
   } else {
     setSigninStatus();
     alert("Please sign in to Google Drive");
+    googleSyncInProgress(false);
   }
 }
 
@@ -569,8 +575,8 @@ function handleReadSyncFileMetadata(response) {
   else {
     alert ("Error Importing Sync File Metadata");
     console.log(response);
+    googleSyncInProgress(false);
   }
-
 }
 
 function handleReadAppFolderMetadata(response) {
@@ -581,6 +587,7 @@ function handleReadAppFolderMetadata(response) {
   else {
     alert ("Error Importing App Folder Metadata");
     console.log(response);
+    googleSyncInProgress(false);
   }
   readSyncFile(googleData.syncFile);
 }
@@ -728,6 +735,7 @@ function setSigninStatus() {
   } else { 
     console.log("You have not authorized this app or you are signed out");
     GoogleSignIn = false;
+    googleSyncInProgress(false);
   }
   if (initialized == true) {
     displayGoogleDriveOptions();
