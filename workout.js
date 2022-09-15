@@ -593,21 +593,19 @@ function updateWeights (dayNum, exerNum) {
             workoutData.days[dayNum].exercises[exerNum].sets[i].weight = document.forms['updateWeight']['weight['+i+']'].value;
             workoutData.days[dayNum].exercises[exerNum].sets[i].label = document.forms['updateWeight']['label['+i+']'].value;
         } else if (document.forms['updateWeight']['weight['+i+']'].value!="" || document.forms['updateWeight']['label['+i+']'].value!="") {
-            workoutData.days[dayNum].exercises[exerNum].sets.push({"weight":document.forms['updateWeight']['weight['+i+']'].value,"label":document.forms['updateWeight']['label['+i+']'].value})
+            workoutData.days[dayNum].exercises[exerNum].sets.push({"Load":document.forms['updateWeight']['weight['+i+']'].value,"label":document.forms['updateWeight']['label['+i+']'].value})
         }
     }
     updateStoredData('workoutData', workoutData);
 }
 
 
-function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
-    //console.log(workoutData)
-    //TODO: Add graphing of history
-    //TODO: combine weight update and tonnage options
+function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     var dayData = workoutData.days[dayNum%(workoutData.days.length)];
     //console.log(dayData)
     var exercise = dayData.exercises[exerNum];
     var tonnageOutput = [];
+    var equivalentCandidate = [];
     var overallTonnage = 0;
     var overallReps = 0;
     var overallSets = 0;
@@ -652,13 +650,14 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     }
     li.appendChild(a);
 
+
     // Exercise Data
     var a = document.createElement('a')
     a.className = "main";
     a.appendChild(document.createTextNode(exercise.exerciseName));
     li.appendChild(a);
-    ul.appendChild(li);
-    
+    ul.appendChild(li);        
+
     //print each row from sets
     for (j=0; j<dayData.exercises[exerNum].sets.length; j++) {
         var li = document.createElement('li');
@@ -674,7 +673,13 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
         ul.appendChild(li)
     }
     tonnageUpdate.appendChild(ul);
-    
+
+    // rpe calc form
+    var ul = document.createElement('ul');
+    var {form, rpeInput} = createRpeCalcForm(dayNum, exerNum, tonnageFormData, rpeFormData);
+    ul.appendChild(form);
+    tonnageUpdate.appendChild(ul);
+
     // tonnage form
     var ul = document.createElement('ul');
     var form = document.createElement('form');
@@ -684,13 +689,11 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     form.addEventListener("change",function (e) 
         {
         //console.log("Form has changed",e,form);
-        var sendTonnageFormData = [[0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0]]; ;
-        for (i=0; i<5; i++) {
-            for (j=0; j<3; j++) {
+        var sendTonnageFormData = [[0,0,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0]]; ;
+        for (i=0; i<tonnageInput.length; i++) {
+            for (j=0; j<tonnageInput[i].length; j++) {
                 sendTonnageFormData[i][j] = form.elements["tonnageInput["+i+"]["+j+"]"].value;
             }
         }
@@ -717,18 +720,33 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     } else if (typeof exercise.tonnageInput != 'undefined') {
           var tonnageInput = exercise.tonnageInput;
     } else {
-          var tonnageInput = [[0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0]];
+          var tonnageInput = [[0,0,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0]];
     }
 
+    // Update to new tonnage format with 3 rows with Sets Reps RPE Load
+    if (tonnageInput[i].length == 3) {
+        tonnageInput = transformTonnageInput(tonnageInput);
+    }
+    
     // calculate max and tonnage
     for (i in tonnageInput) {
         var sets = parseInt(tonnageInput[i][0]);
         var reps = parseInt(tonnageInput[i][1]);
-        var weight = parseInt(tonnageInput[i][2]) + bodyWeight;
+        var rpe = parseInt(tonnageInput[i][2]);
+        var weight = parseInt(tonnageInput[i][3]) + bodyWeight;
+
+        // Tonnage input boundary enforcement
+        reps<0 ? reps=0 : (reps>12 ? reps=12 : reps = reps)
+        tonnageInput[i][1] = reps;   
+
+        sets<0 ? sets=0 : (sets>12 ? sets=12 : sets = sets)
+        tonnageInput[i][0] = sets;
+
+        rpe<3 ? rpe=3 : (rpe>10 ? rpe=10 : rpe = rpe)
+        tonnageInput[i][2] = rpe;
+
         tonnageOutput[i] = sets * reps * weight;
         overallTonnage = overallTonnage + tonnageOutput[i];
         overallReps = overallReps + (sets * reps);
@@ -736,63 +754,74 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
 
         // Equivalent Max Calc https://en.wikipedia.org/wiki/One-repetition_maximum Epley formula
         if (sets*reps > 1) {
-            var equivalentCandidate = Math.round(weight * (1 + reps/30), 2);
+            //var equivalentCandidate = Math.round(weight * (1 + reps/30), 2);
+            equivalentCandidate[i] = Math.round(weight / (rpe_chart[reps][rpe]/100));
         }
         else if (sets*reps == 1) {
-            equivalentCandidate = weight;
+            equivalentCandidate[i] = weight;
         }
         else { // no reps
-            equivalentCandidate = 0;
+            equivalentCandidate[i] = 0;
         }
-        if (equivalentCandidate > equivalentMax) {equivalentMax = equivalentCandidate};
+        if (equivalentCandidate[i] > equivalentMax) {equivalentMax = equivalentCandidate[i]};
         //console.log("row["+i+"] eqMax "+equivalentCandidate+" tonn: "+tonnageOutput[i]);
     }
     //console.log("overall eqMax: "+equivalentMax);
 
-    // Tonnage header row
-    var li = document.createElement('li');
-    var a = document.createElement('a');
-    a.className = "table-right";
-    a.appendChild(document.createTextNode("Vol"));
-    li.appendChild(a);
+    // // Tonnage header row
+    // var li = document.createElement('li');
+    // var a = document.createElement('a');
+    // a.className = "table-right";
+    // a.appendChild(document.createTextNode("Vol"));
+    // li.appendChild(a);
 
-    var a = document.createElement('a');
-    a.className = "table-right";
-    a.appendChild(document.createTextNode("Max"));
-    li.appendChild(a);
+    // var a = document.createElement('a');
+    // a.className = "table-right";
+    // a.appendChild(document.createTextNode("Max"));
+    // li.appendChild(a);
 
-    var a = document.createElement('a');
-    a.className = "table-left";
-    a.appendChild(document.createTextNode("Sets"));
-    li.appendChild(a);
+    // var a = document.createElement('a');
+    // a.className = "table-left";
+    // a.appendChild(document.createTextNode("Sets"));
+    // li.appendChild(a);
     
-     var a = document.createElement('a');
-    a.className = "table-left";
-    a.appendChild(document.createTextNode("Reps"));
-    li.appendChild(a);
+    //  var a = document.createElement('a');
+    // a.className = "table-left";
+    // a.appendChild(document.createTextNode("Reps"));
+    // li.appendChild(a);
 
-    li.appendChild(a);   var a = document.createElement('a');
-    a.className = "table-middle";
-    a.appendChild(document.createTextNode("Weight"));
-    li.appendChild(a);
-    form.appendChild(li);
+    // var a = document.createElement('a');
+    // a.className = "table-left";
+    // a.appendChild(document.createTextNode("RPE"));
+    // li.appendChild(a);
+
+    // li.appendChild(a);   var a = document.createElement('a');
+    // a.className = "table-middle";
+    // a.appendChild(document.createTextNode("Load"));
+    // li.appendChild(a);
+    // form.appendChild(li);
 
     // rows in tonnage matrix
-    for (i=0; i<5; i++){
+    for (i=0; i<tonnageInput.length; i++){
         var sets = parseInt(tonnageInput[i][0]);
         var reps = parseInt(tonnageInput[i][1]);
-        var weight = parseInt(tonnageInput[i][2]) + bodyWeight;
+        var rpe = parseInt(tonnageInput[i][2]);
+        var weight = parseInt(tonnageInput[i][3]) + bodyWeight;
 
         var li = document.createElement('li')
         var a = document.createElement('a');
         a.className = "table-right";
-        if (equivalentMax > 0 && reps*sets > 0) {
-            var percentOfMax = Math.round(100 * weight / equivalentMax, 2);
+        if (equivalentCandidate[i] > 0 && reps*sets > 0) {
+            var percentOfMax = Math.round(100 * weight / equivalentCandidate[i], 2);
         } else {
             var percentOfMax = 0;
         }
 
-        a.appendChild(document.createTextNode(tonnageOutput[i]+" lbs"));
+        // a.appendChild(document.createTextNode(tonnageOutput[i])); // +" lbs"));
+        // a.id = "tonnageOutput["+i+"]";
+        // li.appendChild(a);
+
+        a.appendChild(document.createTextNode(equivalentCandidate[i])); // +" lbs"));
         a.id = "tonnageOutput["+i+"]";
         li.appendChild(a);
 
@@ -802,9 +831,9 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
         a.className = "table-right";
         li.appendChild(a);
 
-        for (j=0; j<3; j++) {
+        for (j=0; j<tonnageInput[i].length; j++) {
             var a = document.createElement('a');
-            if (j==2) {a.className = "table-middle";} else {a.className = "table-left";};
+            if (j==3) {a.className = "table-middle";} else {a.className = "table-left";};
             var tonnageInputField = document.createElement('input');
             tonnageInputField.type = "number";
             tonnageInputField.style.textAlign = "right";
@@ -825,33 +854,34 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     var a = document.createElement('a');
     a.className = "table-right";
     a.id = "totalTonnage"
-    a.appendChild(document.createTextNode(overallTonnage-overallReps*bodyWeight+" lbs"));
+    a.appendChild(document.createTextNode(overallTonnage-overallReps*bodyWeight)); // +" lbs"));
     li.appendChild(a);
 
     var bwa = document.createElement('a');
     bwa.className = "table-right";
     bwa.id = "bwtotalTonnage"
-    bwa.appendChild(document.createTextNode(overallTonnage+" lbs"));
+    bwa.appendChild(document.createTextNode(overallTonnage)); // +" lbs"));
     bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
     bwli.appendChild(bwa);
 
     var a = document.createElement('a');
     a.className = "table-right";
     a.id = "eqMax";
-    if (overallReps>0) {
-        a.appendChild(document.createTextNode((equivalentMax - bodyWeight) + " lbs"));
-    } else {         
-        a.appendChild(document.createTextNode("0 lbs"));
-    }
+    a.appendChild(document.createTextNode("")); // "0 lbs"));
+    // if (overallReps>0) {
+    //     a.appendChild(document.createTextNode((equivalentMax - bodyWeight))); // +" lbs"));
+    // } else {         
+    //     a.appendChild(document.createTextNode("0")); // "0 lbs"));
+    // }
     li.appendChild(a);
 
     var bwa = document.createElement('a');
     bwa.className = "table-right";
     bwa.id = "bweqMax";
     if (overallReps>0) {
-        bwa.appendChild(document.createTextNode(equivalentMax + " lbs"));
+        bwa.appendChild(document.createTextNode(equivalentMax)); // +" lbs"));
     } else {         
-        bwa.appendChild(document.createTextNode("0 lbs"));
+        bwa.appendChild(document.createTextNode("0")); // "0 lbs"));
     }
     bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
     bwli.appendChild(bwa);
@@ -879,6 +909,17 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     }
     li.appendChild(a);
 
+    var a = document.createElement('a');
+    a.className = "table-left";
+    a.id = "totalRpe";
+    a.appendChild(document.createTextNode(""));
+    // if (overallSets>0) {
+    //     a.appendChild(document.createTextNode(Math.round(overallReps/overallSets,0)));
+    // } else {         
+    //     a.appendChild(document.createTextNode("0"));
+    // }
+    li.appendChild(a);
+
     var bwa = document.createElement('a');
     bwa.className = "table-left";
     bwa.id = "bwtotalReps";   
@@ -890,9 +931,9 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     a.className = "table-middle";
     a.id = "avgWeight";
     if (overallReps>0) {
-        a.appendChild(document.createTextNode(Math.round(overallTonnage/overallReps,0)-bodyWeight+" lbs"));
+        a.appendChild(document.createTextNode(Math.round(overallTonnage/overallReps,0)-bodyWeight)); // +" lbs"));
     } else {         
-        a.appendChild(document.createTextNode("0 lbs"));
+        a.appendChild(document.createTextNode("0")); // "0 lbs"));
     }
     li.appendChild(a);
 
@@ -900,26 +941,48 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     bwa.className = "table-middle";
     bwa.id = "bwavgWeight";
     if (overallReps>0) {
-        bwa.appendChild(document.createTextNode(bodyWeight+" lbs"));
+        bwa.appendChild(document.createTextNode(bodyWeight)); // +" lbs"));
     } else {         
-        bwa.appendChild(document.createTextNode("0 lbs"));
+        bwa.appendChild(document.createTextNode("0")); // "0 lbs"));
     }
     bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
     bwli.appendChild(bwa);
     
     form.appendChild(li);
-    form.appendChild(bwli);
+    //form.appendChild(bwli);
     ul.appendChild(form);
     tonnageUpdate.appendChild(ul);
 
-     // Action Buttons
+    // Add graphs to the main page
+    var graph = document.createElement('div');
+    // graph.id = "options";
+    // graph.className = "optionpanel";
+    // graph.style.display = "block";
+
+    var ul = document.createElement('ul');
+    var li2 = document.createElement('li')
+    var plotMaxdiv = document.createElement('div');
+    plotMaxdiv.id = 'Max';
+    li2.appendChild(plotMaxdiv);
+    ul.appendChild(li2);
+
+    var li1 = document.createElement('li')
+    var plotTonnagediv = document.createElement('div');
+    plotTonnagediv.id = 'Tonnage';
+    li1.appendChild(plotTonnagediv);
+    ul.appendChild(li1);
+
+    graph.appendChild(ul);
+    tonnageUpdate.appendChild(graph)
+    
+    // Action Buttons
     var buttonContainer = document.createElement('p');
 
     // Save
     var save = document.createElement('a');
     save.className = "black button";
-    save.href = "javascript:updateTonnage("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+
-        ","+equivalentMax+","+overallTonnage+",);displayTonnageOptions("+dayNum+","+exerNum+")";
+    save.href = "javascript:updateTonnage("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(rpeInput))+
+        ","+encodeURIComponent(JSON.stringify(tonnageInput))+","+equivalentMax+","+overallTonnage+",);displayTonnageOptions("+dayNum+","+exerNum+")";
     save.appendChild(document.createTextNode("Save"));
     buttonContainer.appendChild(save);
     tonnageUpdate.appendChild(buttonContainer);
@@ -958,9 +1021,14 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData) {
     document.getElementById('header').style.display = 'none';
     document.getElementById('main').style.display = 'none';
     window.scrollTo(0, 0);
-    
+   
+    // populate the graphs
+    if ((typeof exercise.tonnageHistory != 'undefined') && (typeof exercise.maxHistory != 'undefined')) {
+        printVerticalStripChart('Tonnage', exercise.tonnageHistory, bodyWeight);
+        printVerticalStripChart('Max', exercise.maxHistory, bodyWeight);
+    }
 }
-function updateTonnage (dayNum, exerNum, tonnageInput, equivalentMax, overallTonnage) {
+function updateTonnage (dayNum, exerNum, rpeInput, tonnageInput, equivalentMax, overallTonnage) {
     //console.log("update weights" + dayNum + " " + exerNum);
     dayNum = dayNum % workoutData.days.length;
     var logDate = new Date();
@@ -968,30 +1036,206 @@ function updateTonnage (dayNum, exerNum, tonnageInput, equivalentMax, overallTon
     //console.log("logging: date:"+logDate.toISOString()+" eqMax:"+equivalentMax+" tonnage:"+overallTonnage);
     //console.log(tonnageInput);
 
-    if ((typeof workoutData.days[dayNum].exercises[exerNum].tonnageInput != 'undefined') && 
-        (typeof workoutData.days[dayNum].exercises[exerNum].tonnageHistory != 'undefined') && 
+    workoutData.days[dayNum].exercises[exerNum].rpeInput = rpeInput;
+    workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
+
+    if ((typeof workoutData.days[dayNum].exercises[exerNum].tonnageHistory != 'undefined') && 
         (typeof workoutData.days[dayNum].exercises[exerNum].maxHistory != 'undefined')) {
         var lastIndex = workoutData.days[dayNum].exercises[exerNum].tonnageHistory.length - 1;
         var lastDate = new Date(workoutData.days[dayNum].exercises[exerNum].tonnageHistory[lastIndex].date);
         // if the last log entry was more than an hour ago log a new entry otherwise replace it
         //console.log("last", lastDate, "log", logDate, "diff", (logDate - lastDate));
         if ((logDate - lastDate) > 60*60*1000) { // 60min * 60sec/min * 1000msec/sec
-            workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
             workoutData.days[dayNum].exercises[exerNum].tonnageHistory.push({date:logDate.toISOString(), overallTonnage:overallTonnage});
             workoutData.days[dayNum].exercises[exerNum].maxHistory.push({date:logDate.toISOString(), equivalentMax:equivalentMax})
         }
         else {
-            workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
             workoutData.days[dayNum].exercises[exerNum].tonnageHistory[lastIndex] = {date:logDate.toISOString(), overallTonnage:overallTonnage};
             workoutData.days[dayNum].exercises[exerNum].maxHistory[lastIndex]= {date:logDate.toISOString(), equivalentMax:equivalentMax}
         }
         
     } else {
-        workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
         workoutData.days[dayNum].exercises[exerNum].tonnageHistory = [{date:logDate.toISOString(), overallTonnage:overallTonnage}];
         workoutData.days[dayNum].exercises[exerNum].maxHistory = [{date:logDate.toISOString(), equivalentMax:equivalentMax}];
     }
     updateStoredData('workoutData', workoutData);
+}
+
+function createRpeCalcForm(dayNum, exerNum, tonnageFormData, rpeFormData) {
+
+    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    //console.log(dayData)
+    var exercise = dayData.exercises[exerNum];
+
+    // rpe form
+    var ul = document.createElement('ul');
+    var form = document.createElement('form');
+    //form.method = "post";
+    //form.action = "javascript:updateForecastSettings(forecastSettings)";
+    form.name = "updateRpe";
+    form.addEventListener("change",function (e) 
+        {
+        //console.log("Form has changed",e,form);
+        var sendRpeFormData = [[0,0,0],
+                    [0,0,0]]; ;
+        for (i=0; i<2; i++) {
+            for (j=0; j<3; j++) {
+                sendRpeFormData[i][j] = form.elements["rpeInput["+i+"]["+j+"]"].value;
+            }
+        }
+        displayTonnageOptions(dayNum, exerNum, tonnageFormData, sendRpeFormData);
+        }
+    );
+
+    // dayNum
+    var dayNumInput = document.createElement('input');
+    dayNumInput.value = dayNum;
+    dayNumInput.type = "hidden";
+    dayNumInput.name = "dayNum";
+    form.appendChild(dayNumInput);
+
+    // exerNum
+    var exerNumInput = document.createElement('input');
+    exerNumInput.value = exerNum;
+    exerNumInput.type = "hidden";
+    exerNumInput.name = "exerNum";
+    form.appendChild(exerNumInput);
+
+    if (typeof rpeFormData != 'undefined') {
+        var rpeInput = rpeFormData
+    } else if (typeof exercise.rpeInput != 'undefined') {
+          var rpeInput = exercise.rpeInput;
+    } else {
+          var rpeInput = [[0,0,0],
+                    [0,0,0]];
+    }
+
+    // calculate max and rpe loading
+    var bodyWeight = 0;
+    var bodyWeighText = "";
+    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined' || 
+        workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight > 0) {
+            bodyWeight = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
+    }
+
+    var rpeReps = parseInt(rpeInput[0][0]);
+    var rpeWeight = parseInt(rpeInput[0][2]) + bodyWeight;
+    var rpeRpe = parseInt(rpeInput[0][1]);
+    var tgtReps = parseInt(rpeInput[1][0]);
+    var tgtWeight = parseInt(rpeInput[1][2]) + bodyWeight;
+    var tgtRpe = parseInt(rpeInput[1][1]);       
+
+    // RPE boundary enforcement
+    rpeReps<1 ? rpeReps=1 : (rpeReps>12 ? rpeReps=12 : rpeReps = rpeReps)
+    rpeInput[0][0] = rpeReps;   
+
+    tgtReps<1 ? tgtReps=1 : (tgtReps>12 ? tgtReps=12 : tgtReps = tgtReps)
+    rpeInput[1][0] = tgtReps;
+
+    rpeRpe<3 ? rpeRpe=3 : (rpeRpe>10 ? rpeRpe=10 : rpeRpe = rpeRpe)
+    rpeInput[0][1] = rpeRpe;
+
+    tgtRpe<3 ? tgtRpe=3 : (tgtRpe>10 ? tgtRpe=10 : tgtRpe = tgtRpe)
+    rpeInput[1][1] = tgtRpe;
+
+    var rpeMax = rpeReps*rpeRpe ? (rpeWeight / (rpe_chart[rpeReps][rpeRpe]/100)) : 0 // lifted weight over the rpe table percentage
+    var tgtWeight = tgtReps*tgtRpe ? ((rpe_chart[tgtReps][tgtRpe]/100) * rpeMax) : 0// rpeMax * rpe table percentage
+
+    rpeMax = Math.round(rpeMax, 2)
+    tgtWeight = Math.round(tgtWeight, 2)
+    
+    // rpe header row
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.className = "table-right";
+    a.appendChild(document.createTextNode("Max"));
+    li.appendChild(a);
+
+    var a = document.createElement('a');
+    a.className = "table-right";
+    a.appendChild(document.createTextNode("%"));
+    li.appendChild(a);
+
+    var a = document.createElement('a');
+    a.className = "table-left";
+    a.appendChild(document.createTextNode("Sets"));
+    li.appendChild(a);
+
+    var a = document.createElement('a');
+    a.className = "table-left";
+    a.appendChild(document.createTextNode("Reps"));
+    li.appendChild(a);
+    
+     var a = document.createElement('a');
+    a.className = "table-left";
+    a.appendChild(document.createTextNode("RPE"));
+    li.appendChild(a);
+
+    li.appendChild(a);   var a = document.createElement('a');
+    a.className = "table-middle";
+    a.appendChild(document.createTextNode("Load"));
+    li.appendChild(a);
+    form.appendChild(li);
+
+    // rows in rpe matrix
+    for (i=0; i<2; i++) {
+
+        var li = document.createElement('li')
+        if (i==0) {
+            displayRightValue = rpeMax // +" lbs"
+            displayLeftValue = rpeMax ? Math.round((rpeWeight/rpeMax)*100)+"%" : "0%"
+        }
+        else {
+            displayRightValue =  rpeMax // +" lbs"
+            displayLeftValue = tgtReps*tgtRpe ? Math.round(rpe_chart[tgtReps][tgtRpe])+"%" : "0%"               
+        }
+
+        var a = document.createElement('a');
+        a.className = "table-right";
+        a.appendChild(document.createTextNode(displayRightValue));
+        a.id = "eqMax";
+        li.appendChild(a);
+
+        var a = document.createElement('a');
+        a.appendChild(document.createTextNode(displayLeftValue));
+        a.id = "rpeMax";
+        a.className = "table-right";
+        li.appendChild(a);
+
+        if (i==0) {
+            displayValue = "Max"
+        }
+        else {
+             displayValue = "Tgt"              
+        }
+        var a = document.createElement('a');
+        a.appendChild(document.createTextNode(displayValue));
+        a.id = "set_"+i;
+        a.className = "table-left";
+        li.appendChild(a);
+
+        for (j=0; j<3; j++) {
+            var a = document.createElement('a');
+            if (j==2) {a.className = "table-middle";} else {a.className = "table-left";};
+
+            var rpeInputField = document.createElement('input');
+            rpeInputField.type = "number";
+            rpeInputField.style.textAlign = "right";
+            rpeInputField.name = "rpeInput["+i+"]["+j+"]";
+            rpeInputField.value = rpeInput[i][j];
+            rpeInputField.addEventListener("focus", function() { this.select(); });
+            
+            if (i==1 && j==2) {
+                a.appendChild(document.createTextNode(tgtWeight)); // +" lbs"));
+                a.id = "tgtWeight";
+                rpeInputField.type = "hidden";
+            }
+            a.appendChild(rpeInputField);
+            li.appendChild(a)
+        }
+        form.appendChild(li)
+    }
+    return {form, rpeInput}
 }
 
 function promptForBodyWeight(dayNum, exerNum, tonnageFormData) {
@@ -1170,4 +1414,227 @@ function showWorkoutOptions(dayNum) {
 function resetWorkout() {
     clearStoredData('workoutData');
     init();
+}
+
+function transformTonnageInput(input) {
+    var output = [];
+    for (var i=0;i<input.length;i++) {
+        if (i<3) {
+            // copy sets and reps then initial rpe to 10 and copy the weight
+            output.push([input[i][0],input[i][1],'10',input[i][2]]) 
+        }
+    }
+    return output
+}
+
+
+// From https://rpecalculator.com and table from https://articles.reactivetrainingsystems.com/2015/11/29/beginning-rts/
+// Customizing: https://articles.reactivetrainingsystems.com/2016/01/06/customizing-your-rpe-chart/
+// https://www.exodus-strength.com/forum/viewtopic.php?t=2967
+
+const rpe_chart = {
+    1: {
+        10: 100,
+        9.5: 97.8,
+        9: 95.5,
+        8.5: 93.9,
+        8: 92.2,
+        7.5: 90.7,
+        7: 89.2,
+        6.5: 87.8,
+        6: 86.3,
+        5.5: 85,
+        5: 83.7,
+        4.5: 82.4,
+        4: 81.1,
+        3.5: 79.9,
+        3: 78.6
+    },
+    2: {
+        10: 95.5,
+        9.5: 93.9,
+        9: 92.2,
+        8.5: 90.7,
+        8: 89.2,
+        7.5: 87.8,
+        7: 86.3,
+        6.5: 85,
+        6: 83.7,
+        5.5: 82.4,
+        5: 81.1,
+        4.5: 79.9,
+        4: 78.6,
+        3.5: 77.4,
+        3: 76.2
+    },
+    3: {
+        10: 92.2,
+        9.5: 90.7,
+        9: 89.2,
+        8.5: 87.8,
+        8: 86.3,
+        7.5: 85,
+        7: 83.7,
+        6.5: 82.4,
+        6: 81.1,
+        5.5: 79.9,
+        5: 78.6,
+        4.5: 77.4,
+        4: 76.2,
+        3.5: 75.1,
+        3: 73.9,
+    },
+    4: {
+        10: 89.2,
+        9.5: 87.8,
+        9: 86.3,
+        8.5: 85,
+        8: 83.7,
+        7.5: 82.4,
+        7: 81.1,
+        6.5: 79.9,
+        6: 78.6,
+        5.5: 77.4,
+        5: 76.2,
+        4.5: 75.1,
+        4: 73.9,
+        3.5: 72.3,
+        3: 70.7,
+    },
+    5: {
+        10: 86.3,
+        9.5: 85,
+        9: 83.7,
+        8.5: 82.4,
+        8: 81.1,
+        7.5: 79.9,
+        7: 78.6,
+        6.5: 77.4,
+        6: 76.2,
+        5.5: 75.1,
+        5: 73.9,
+        4.5: 72.3,
+        4: 70.7,
+        3.5: 69.4,
+        3: 68
+    },
+    6: {
+        10: 83.7,
+        9.5: 82.4,
+        9: 81.1,
+        8.5: 79.9,
+        8: 78.6,
+        7.5: 77.4,
+        7: 76.2,
+        6.5: 75.1,
+        6: 73.9,
+        5.5: 72.3,
+        5: 70.7,
+        4.5: 69.4,
+        4: 68,
+        3.5: 66.7,
+        3: 65.3
+    },
+    7: {
+        10: 81.1,
+        9.5: 79.9,
+        9: 78.6,
+        8.5: 77.4,
+        8: 76.2,
+        7.5: 75.1,
+        7: 73.9,
+        6.5: 72.3,
+        6: 70.7,
+        5.5: 69.4,
+        5: 68,
+        4.5: 66.7,
+        4: 65.3,
+        3.5: 64,
+        3: 62.6
+    },
+    8: {
+        10: 78.6,
+        9.5: 77.4,
+        9: 76.2,
+        8.5: 75.1,
+        8: 73.9,
+        7.5: 72.3,
+        7: 70.7,
+        6.5: 69.4,
+        6: 68,
+        5.5: 66.7,
+        5: 65.3,
+        4.5: 64,
+        4: 62.6,
+        3.5: 61.3,
+        3: 59.9
+    },
+    9: {
+        10: 76.2,
+        9.5: 75.1,
+        9: 73.9,
+        8.5: 72.3,
+        8: 70.7,
+        7.5: 69.4,
+        7: 68,
+        6.5: 66.7,
+        6: 65.3,
+        5.5: 64,
+        5: 62.6,
+        4.5: 61.3,
+        4: 59.9,
+        3.5: 58.6,
+        3: 57.4
+    },
+    10: {
+        10: 73.9,
+        9.5: 72.3,
+        9: 70.7,
+        8.5: 69.4,
+        8: 68,
+        7.5: 66.7,
+        7: 65.3,
+        6.5: 64,
+        6: 62.6,
+        5.5: 61.3,
+        5: 59.9,
+        4.5: 58.6,
+        4: 57.4,
+        3.5: 55.9,
+        3: 54.5
+    },
+    11: {
+        10: 70.7,
+        9.5: 69.4,
+        9: 68,
+        8.5: 66.7,
+        8: 65.3,
+        7.5: 64,
+        7: 62.6,
+        6.5: 61.3,
+        6: 59.9,
+        5.5: 58.9,
+        5: 57.2,
+        4.5: 55.8,
+        4: 54.5,
+        3.5: 53.2,
+        3: 51.8
+    },
+    12: {
+        10: 68,
+        9.5: 66.7,
+        9: 65.3,
+        8.5: 64,
+        8: 62.6,
+        7.5: 61.3,
+        7: 59.9,
+        6.5: 58.6,
+        6: 57.4,
+        5.5: 55.9,
+        5: 54.5,
+        4.5: 53.2,
+        4: 51.8,
+        3.5: 50.5,
+        3: 49.1
+    }
 }

@@ -222,7 +222,7 @@ ul li a.table-right {
 	float: right;
 	text-align: right;
 	margin-top: 0px;
-	width: 75px;
+	width: 41px;
 }
 ul li a.table-left {
 	float: left;
@@ -233,7 +233,7 @@ ul li a.table-left {
 ul li a.table-middle {
 	text-align: right;
 	margin-top: 0px;
-	width: 60px;
+	width: 50px;
 }
 /* option panel */
 
@@ -260,7 +260,7 @@ div#options h2 a {
 	left: 0;
 	right: 0;
 	top:0;
-	height:100%;
+	/* height:100%; */
 	display: none;
 }
 

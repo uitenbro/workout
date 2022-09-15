@@ -42,7 +42,7 @@
         labelsArray[labelsArray.length-1] = inputArray[inputArray.length-1].equivalentMax-bodyWeight;
     }
    
-    var minHeight = 300; //40 + (20 * dataArray.length)
+    var minHeight = 250; //40 + (20 * dataArray.length)
     var yRange = yMax - yMin;
     if (yRange < 10) {yRange = 10;}
     var yAxisMax = Math.ceil((yMax + 0.2 * yRange)/10) * 10; //10% padding to allow for label
