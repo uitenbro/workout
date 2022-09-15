@@ -156,6 +156,14 @@ div#header #fourthButton {
 	-webkit-border-image: url(../images/grayButton.png) 0 5 0 5;
 }
 
+#Max .jqplot-point-label {
+	color:  #000000;
+	font-weight: bolder;
+}
+#Tonnage .jqplot-point-label {
+	color:  #000000;
+	font-weight: bolder;
+}
 
 /***** List (base) ******/
 

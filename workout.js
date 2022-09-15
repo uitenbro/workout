@@ -690,7 +690,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
         {
         //console.log("Form has changed",e,form);
         var sendTonnageFormData = [[0,0,0,0],
-                    [0,0,0,0],
+                    [0,0,0,0], [0,0,0,0],
                     [0,0,0,0]]; ;
         for (i=0; i<tonnageInput.length; i++) {
             for (j=0; j<tonnageInput[i].length; j++) {
@@ -721,14 +721,12 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
           var tonnageInput = exercise.tonnageInput;
     } else {
           var tonnageInput = [[0,0,0,0],
-                    [0,0,0,0],
+                    [0,0,0,0], [0,0,0,0],
                     [0,0,0,0]];
     }
 
-    // Update to new tonnage format with 3 rows with Sets Reps RPE Load
-    if (tonnageInput[i].length == 3) {
-        tonnageInput = transformTonnageInput(tonnageInput);
-    }
+    // Update to new tonnage format with 4 rows with Sets Reps RPE Load
+    tonnageInput = transformTonnageInput(tonnageInput);
     
     // calculate max and tonnage
     for (i in tonnageInput) {
@@ -948,8 +946,8 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
     bwli.appendChild(bwa);
     
-    form.appendChild(li);
-    //form.appendChild(bwli);
+    //form.appendChild(li);  // add roll up for set reps and tonnage 
+    //form.appendChild(bwli); //  add roll up with bodyweight
     ul.appendChild(form);
     tonnageUpdate.appendChild(ul);
 
@@ -991,7 +989,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     var calc = document.createElement('a');
     calc.className = "black button";
     calc.href = "javascript:displayTonnageHistory("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+", "+bodyWeight+")";
-    calc.appendChild(document.createTextNode("History"));
+    calc.appendChild(document.createTextNode("Full History"));
     buttonContainer.appendChild(calc);
 
     // Clear History
@@ -1024,8 +1022,8 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
    
     // populate the graphs
     if ((typeof exercise.tonnageHistory != 'undefined') && (typeof exercise.maxHistory != 'undefined')) {
-        printVerticalStripChart('Tonnage', exercise.tonnageHistory, bodyWeight);
-        printVerticalStripChart('Max', exercise.maxHistory, bodyWeight);
+        printVerticalStripChart('Tonnage', exercise.tonnageHistory, bodyWeight, equivalentMax, overallTonnage, true);
+        printVerticalStripChart('Max', exercise.maxHistory, bodyWeight, equivalentMax, overallTonnage, true);
     }
 }
 function updateTonnage (dayNum, exerNum, rpeInput, tonnageInput, equivalentMax, overallTonnage) {
@@ -1419,11 +1417,27 @@ function resetWorkout() {
 function transformTonnageInput(input) {
     var output = [];
     for (var i=0;i<input.length;i++) {
-        if (i<3) {
-            // copy sets and reps then initial rpe to 10 and copy the weight
-            output.push([input[i][0],input[i][1],'10',input[i][2]]) 
+        // if the data has not been updated to include RPE
+        if (input[i].length == 3) {
+            if (i<4) { // truncate longer data sets to 4 sets
+                if (typeof input[i] != 'undefined') {
+                    // copy sets and reps then initial rpe to 10 and copy the weight
+                   output.push([input[i][0],input[i][1],'10',input[i][2]]) 
+                }
+                else {
+                    output.push([0,0,0,0])
+                }
+            }
+        }
+        else {
+            // data is in the set, reps, rpe, weight format so just copy it to output
+            output.push(input[i])
         }
     }
+    // if the data has fewer than 4 sets add sets
+    while (output.length < 4) {
+        output.push([0,0,0,0]);
+    }   
     return output
 }
 

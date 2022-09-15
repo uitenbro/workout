@@ -365,14 +365,19 @@ function handleUpdateSyncFile(response) {
 function handleReadSyncFile(response) {
   if (response.error == undefined) {
     //console.log(response);
-    workoutData = response;
-    updateStoredData('workoutData', workoutData);
-    console.log("Local Storage updated with Google Drive Data");
-    setLastReadTime();
-    updateStoredData('googleData', googleData);
+    if (response) {
+      workoutData = response;
+      updateStoredData('workoutData', workoutData);
+      console.log("Local Storage updated with Google Drive Data");
+      setLastReadTime();
+      updateStoredData('googleData', googleData);
+    }
+    else {
+      alert("Error reading Sync File Data, repair Sync File");
+    }
   }
   else {
-    alert("Error reading Sync File");
+    alert("Error reading/accessing Sync File");
     console.log(response);
   }
   googleSyncInProgress(false);;
