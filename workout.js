@@ -150,6 +150,18 @@ function printHeader (dayNum) {
     document.getElementById('header').replaceWith(header);
 }
 
+// setup swipe handler
+let touchstartX = 0
+let touchendX = 0
+    
+function checkDirection(dayNum) {
+  //console.log(Math.abs(touchendX - touchstartX))
+  if (Math.abs(touchendX - touchstartX) > 50) {
+      if (touchendX < touchstartX) browseNext(dayNum); 
+      if (touchendX > touchstartX) browsePrevious(dayNum);
+  }
+}
+
 function printMain(dayNum) {
     /*
     <ul>    
@@ -179,6 +191,15 @@ function printMain(dayNum) {
 
     var main = document.createElement('div');
     main.id = 'main';
+    
+    // Add swipe handlers
+    main.addEventListener('touchstart', e => {
+        touchstartX = e.changedTouches[0].screenX
+    })
+    main.addEventListener('touchend', e => {
+        touchendX = e.changedTouches[0].screenX
+        checkDirection(dayNum)
+    })
 
     // Print Workout Info and Day
     main.appendChild(printWorkoutInfo(dayNum));
