@@ -88,6 +88,7 @@
 
     var today = new Date()
     var xRange = today.getTime() - dataArray[0][0].getTime()
+    var xAxisMin = Math.ceil((dataArray[0][0].getTime() - 0.17 * xRange)); //17% padding to allow for label
     var xAxisMax = Math.ceil((today.getTime() + 0.17 * xRange)); //17% padding to allow for label
     //console.log(dataArray);
 
@@ -122,6 +123,7 @@
             // Use x2axis to put the labels on top
             xaxis: {
                 show: true,
+                min: xAxisMin,
                 max: xAxisMax,
                 renderer:$.jqplot.DateAxisRenderer,
                 //tickInterval:'1 day',
