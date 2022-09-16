@@ -33,6 +33,7 @@ div#loading {
 
 div#main {
 	margin-top: 55px;
+	height:  100vh;
 }
 
 div#main h1 {

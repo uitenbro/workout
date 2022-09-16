@@ -156,7 +156,7 @@ let touchendX = 0
     
 function checkDirection(dayNum) {
   //console.log(Math.abs(touchendX - touchstartX))
-  if (Math.abs(touchendX - touchstartX) > 50) {
+  if (Math.abs(touchendX - touchstartX) > 20) {
       if (touchendX < touchstartX) browseNext(dayNum); 
       if (touchendX > touchstartX) browsePrevious(dayNum);
   }
@@ -189,9 +189,9 @@ function printMain(dayNum) {
     //console.log("dayNum = " + dayNum);
     //readStoredData();
 
+
     var main = document.createElement('div');
     main.id = 'main';
-    
     // Add swipe handlers
     main.addEventListener('touchstart', e => {
         touchstartX = e.changedTouches[0].screenX
@@ -229,7 +229,8 @@ function printWorkoutInfo(dayNum) {
     dayNumber.className = "right";
     dayNumber.href = "javascript:showWorkoutOptions("+dayNum+");"
     var printDay = dayNum+1;
-    dayNumber.appendChild(document.createTextNode("Day " + printDay))
+    //dayNumber.appendChild(document.createTextNode("Day " + printDay))
+    dayNumber.appendChild(document.createTextNode(""))
     workoutLi.appendChild(dayNumber);
 
     var dayName = document.createElement('a');
@@ -256,12 +257,7 @@ function printExercise(dayNum, exerNum) {
     a.className = "right";
     a.href = "javascript:displayTonnageOptions("+dayNum+","+exerNum+")";
     if (typeof exercise.tonnageHistory != 'undefined') {
-        var bodyWeight = 0;
-        if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined' || 
-            workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight > 0) {
-                bodyWeight = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
-        }   
-        a.appendChild(document.createTextNode("m:"+ parseInt(exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax-bodyWeight) +
+        a.appendChild(document.createTextNode("m:"+ parseInt(exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax) +
             " v:"+exercise.tonnageHistory[exercise.tonnageHistory.length-1].overallTonnage));
     } else {
         a.appendChild(document.createTextNode("m:- v:-"));
@@ -339,7 +335,9 @@ function browsePrevious(dayNum) {
         printMain(dayNum-1);
     }
     else {
-        alert("You're at the first day")
+        dayNum=workoutData.days.length;
+        printHeader(dayNum);
+        printMain(dayNum);
     }
 }
 function browseNext(dayNum) {
@@ -631,12 +629,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     var overallReps = 0;
     var overallSets = 0;
     var equivalentMax = 0;
-    var bodyWeight = 0;
-    var bodyWeighText = "";
-    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined' || 
-        workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight > 0) {
-            bodyWeight = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
-    }
+
     tonnageUpdate = document.createElement('div')
     tonnageUpdate.id = "options";
     tonnageUpdate.className = "optionpanel";
@@ -661,10 +654,9 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     var li = document.createElement('li');
     var a = document.createElement('a');
     a.className = "right";
-    //a.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
 
     if (typeof exercise.tonnageHistory != 'undefined') {
-        a.appendChild(document.createTextNode("m:"+ parseInt(exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax-bodyWeight) +
+        a.appendChild(document.createTextNode("m:"+ parseInt(exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax) +
             " v:"+exercise.tonnageHistory[exercise.tonnageHistory.length-1].overallTonnage));
     } else {
         a.appendChild(document.createTextNode("m:-"+" v:-"));
@@ -681,44 +673,47 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
 
     //print each row from sets
     for (j=0; j<dayData.exercises[exerNum].sets.length; j++) {
-        var li = document.createElement('li');
-        var a = document.createElement('a');
-        a.className = "right";
-        a.appendChild(document.createTextNode(exercise.sets[j].weight));
-        li.appendChild(a);
+        if (exercise.sets[j].weight + exercise.sets[j].label != "") {
+            var li = document.createElement('li');
+            var a = document.createElement('a');
+            a.className = "right";
+            a.appendChild(document.createTextNode(exercise.sets[j].weight));
+            li.appendChild(a);
 
-        var a = document.createElement('a');
-        a.appendChild(document.createTextNode(exercise.sets[j].label));
-        li.appendChild(a);
-   
-        ul.appendChild(li)
+            var a = document.createElement('a');
+            a.appendChild(document.createTextNode(exercise.sets[j].label));
+            li.appendChild(a);
+       
+            ul.appendChild(li)
+        }
     }
     tonnageUpdate.appendChild(ul);
 
-    // rpe calc form
-    var ul = document.createElement('ul');
-    var {form, rpeInput} = createRpeCalcForm(dayNum, exerNum, tonnageFormData, rpeFormData);
-    ul.appendChild(form);
-    tonnageUpdate.appendChild(ul);
-
-    // tonnage form
+    // rpe tonnage form
     var ul = document.createElement('ul');
     var form = document.createElement('form');
     //form.method = "post";
     //form.action = "javascript:updateForecastSettings(forecastSettings)";
-    form.name = "updateTonnage";
+    form.name = "updateRpeTonnage";
     form.addEventListener("change",function (e) 
         {
         //console.log("Form has changed",e,form);
         var sendTonnageFormData = [[0,0,0,0],
                     [0,0,0,0], [0,0,0,0],
                     [0,0,0,0]]; ;
-        for (i=0; i<tonnageInput.length; i++) {
-            for (j=0; j<tonnageInput[i].length; j++) {
+        for (i=0; i<sendTonnageFormData.length; i++) {
+            for (j=0; j<sendTonnageFormData[i].length; j++) {
                 sendTonnageFormData[i][j] = form.elements["tonnageInput["+i+"]["+j+"]"].value;
             }
         }
-        displayTonnageOptions(dayNum, exerNum, sendTonnageFormData);
+        var sendRpeFormData = [[0,0,0],
+                    [0,0,0]]; ;
+        for (i=0; i<sendRpeFormData.length; i++) {
+            for (j=0; j<sendRpeFormData[i].length; j++) {
+                sendRpeFormData[i][j] = form.elements["rpeInput["+i+"]["+j+"]"].value;
+            }
+        }
+        displayTonnageOptions(dayNum, exerNum, sendTonnageFormData, sendRpeFormData);
         }
     );
 
@@ -735,6 +730,14 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     exerNumInput.type = "hidden";
     exerNumInput.name = "exerNum";
     form.appendChild(exerNumInput);
+
+    // rpe calc form
+    var ul = document.createElement('ul');
+    var {form, rpeInput} = createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData);
+    var li = document.createElement('li');
+    form.appendChild(li)
+    //ul.appendChild(form);
+    //tonnageUpdate.appendChild(ul);
 
     if (typeof tonnageFormData != 'undefined') {
         var tonnageInput = tonnageFormData
@@ -754,7 +757,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
         var sets = parseInt(tonnageInput[i][0]);
         var reps = parseInt(tonnageInput[i][1]);
         var rpe = parseInt(tonnageInput[i][2]);
-        var weight = parseInt(tonnageInput[i][3]) + bodyWeight;
+        var weight = parseInt(tonnageInput[i][3]);
 
         // Tonnage input boundary enforcement
         reps<0 ? reps=0 : (reps>12 ? reps=12 : reps = reps)
@@ -821,11 +824,11 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     // form.appendChild(li);
 
     // rows in tonnage matrix
-    for (i=0; i<tonnageInput.length; i++){
+    for (i=0; i<tonnageInput.length; i++) {
         var sets = parseInt(tonnageInput[i][0]);
         var reps = parseInt(tonnageInput[i][1]);
         var rpe = parseInt(tonnageInput[i][2]);
-        var weight = parseInt(tonnageInput[i][3]) + bodyWeight;
+        var weight = parseInt(tonnageInput[i][3]);
 
         var li = document.createElement('li')
         var a = document.createElement('a');
@@ -873,50 +876,20 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     var a = document.createElement('a');
     a.className = "table-right";
     a.id = "totalTonnage"
-    a.appendChild(document.createTextNode(overallTonnage-overallReps*bodyWeight)); // +" lbs"));
+    a.appendChild(document.createTextNode(overallTonnage)); // +" lbs"));
     li.appendChild(a);
-
-    var bwa = document.createElement('a');
-    bwa.className = "table-right";
-    bwa.id = "bwtotalTonnage"
-    bwa.appendChild(document.createTextNode(overallTonnage)); // +" lbs"));
-    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
-    bwli.appendChild(bwa);
 
     var a = document.createElement('a');
     a.className = "table-right";
     a.id = "eqMax";
-    a.appendChild(document.createTextNode("")); // "0 lbs"));
-    // if (overallReps>0) {
-    //     a.appendChild(document.createTextNode((equivalentMax - bodyWeight))); // +" lbs"));
-    // } else {         
-    //     a.appendChild(document.createTextNode("0")); // "0 lbs"));
-    // }
+    a.appendChild(document.createTextNode("")); 
     li.appendChild(a);
-
-    var bwa = document.createElement('a');
-    bwa.className = "table-right";
-    bwa.id = "bweqMax";
-    if (overallReps>0) {
-        bwa.appendChild(document.createTextNode(equivalentMax)); // +" lbs"));
-    } else {         
-        bwa.appendChild(document.createTextNode("0")); // "0 lbs"));
-    }
-    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
-    bwli.appendChild(bwa);
 
     var a = document.createElement('a');
     a.className = "table-left";
     a.id = "totalSets";
     a.appendChild(document.createTextNode(overallSets));
     li.appendChild(a);
-
-    var bwa = document.createElement('a');
-    bwa.className = "table-left";
-    bwa.id = "bwtotalSets";
-    bwa.appendChild(document.createTextNode("BW"))
-    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
-    bwli.appendChild(bwa);
 
     var a = document.createElement('a');
     a.className = "table-left";
@@ -939,36 +912,17 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     // }
     li.appendChild(a);
 
-    var bwa = document.createElement('a');
-    bwa.className = "table-left";
-    bwa.id = "bwtotalReps";   
-    bwa.appendChild(document.createTextNode("adj:"));
-    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
-    bwli.appendChild(bwa);
-
     var a = document.createElement('a');
     a.className = "table-middle";
     a.id = "avgWeight";
     if (overallReps>0) {
-        a.appendChild(document.createTextNode(Math.round(overallTonnage/overallReps,0)-bodyWeight)); // +" lbs"));
+        a.appendChild(document.createTextNode(Math.round(overallTonnage/overallReps,0))); // +" lbs"));
     } else {         
         a.appendChild(document.createTextNode("0")); // "0 lbs"));
     }
     li.appendChild(a);
-
-    var bwa = document.createElement('a');
-    bwa.className = "table-middle";
-    bwa.id = "bwavgWeight";
-    if (overallReps>0) {
-        bwa.appendChild(document.createTextNode(bodyWeight)); // +" lbs"));
-    } else {         
-        bwa.appendChild(document.createTextNode("0")); // "0 lbs"));
-    }
-    bwa.href = "javascript:promptForBodyWeight("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+")";
-    bwli.appendChild(bwa);
     
     //form.appendChild(li);  // add roll up for set reps and tonnage 
-    //form.appendChild(bwli); //  add roll up with bodyweight
     ul.appendChild(form);
     tonnageUpdate.appendChild(ul);
 
@@ -1009,7 +963,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     // History
     var calc = document.createElement('a');
     calc.className = "black button";
-    calc.href = "javascript:displayTonnageHistory("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+", "+bodyWeight+")";
+    calc.href = "javascript:displayTonnageHistory("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+")";
     calc.appendChild(document.createTextNode("Full History"));
     buttonContainer.appendChild(calc);
 
@@ -1043,8 +997,8 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
    
     // populate the graphs
     if ((typeof exercise.tonnageHistory != 'undefined') && (typeof exercise.maxHistory != 'undefined')) {
-        printVerticalStripChart('Tonnage', exercise.tonnageHistory, bodyWeight, equivalentMax, overallTonnage, true);
-        printVerticalStripChart('Max', exercise.maxHistory, bodyWeight, equivalentMax, overallTonnage, true);
+        printVerticalStripChart('Tonnage', exercise.tonnageHistory, equivalentMax, overallTonnage, true);
+        printVerticalStripChart('Max', exercise.maxHistory, equivalentMax, overallTonnage, true);
     }
 }
 function updateTonnage (dayNum, exerNum, rpeInput, tonnageInput, equivalentMax, overallTonnage) {
@@ -1080,31 +1034,33 @@ function updateTonnage (dayNum, exerNum, rpeInput, tonnageInput, equivalentMax, 
     updateStoredData('workoutData', workoutData);
 }
 
-function createRpeCalcForm(dayNum, exerNum, tonnageFormData, rpeFormData) {
+function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) {
 
     var dayData = workoutData.days[dayNum%(workoutData.days.length)];
     //console.log(dayData)
     var exercise = dayData.exercises[exerNum];
 
-    // rpe form
-    var ul = document.createElement('ul');
-    var form = document.createElement('form');
-    //form.method = "post";
-    //form.action = "javascript:updateForecastSettings(forecastSettings)";
-    form.name = "updateRpe";
-    form.addEventListener("change",function (e) 
-        {
-        //console.log("Form has changed",e,form);
-        var sendRpeFormData = [[0,0,0],
-                    [0,0,0]]; ;
-        for (i=0; i<2; i++) {
-            for (j=0; j<3; j++) {
-                sendRpeFormData[i][j] = form.elements["rpeInput["+i+"]["+j+"]"].value;
-            }
-        }
-        displayTonnageOptions(dayNum, exerNum, tonnageFormData, sendRpeFormData);
-        }
-    );
+    // form.addEventListener("change",function (e) 
+    //     {
+    //     //console.log("Form has changed",e,form);
+    //     var sendTonnageFormData = [[0,0,0,0],
+    //                 [0,0,0,0], [0,0,0,0],
+    //                 [0,0,0,0]]; ;
+    //     for (i=0; i<sendTonnageFormData.length; i++) {
+    //         for (j=0; j<sendTonnageFormData[i].length; j++) {
+    //             sendTonnageFormData[i][j] = document.getElementById("updateTonnage").elements["tonnageInput["+i+"]["+j+"]"].value;
+    //         }
+    //     }
+    //     var sendRpeFormData = [[0,0,0],
+    //                 [0,0,0]]; ;
+    //     for (i=0; i<sendRpeFormData.length; i++) {
+    //         for (j=0; j<sendRpeFormData[i].length; j++) {
+    //             sendRpeFormData[i][j] = form.elements["rpeInput["+i+"]["+j+"]"].value;
+    //         }
+    //     }
+    //     displayTonnageOptions(dayNum, exerNum, sendTonnageFormData, sendRpeFormData);
+    //     }
+    // );
 
     // dayNum
     var dayNumInput = document.createElement('input');
@@ -1130,18 +1086,11 @@ function createRpeCalcForm(dayNum, exerNum, tonnageFormData, rpeFormData) {
     }
 
     // calculate max and rpe loading
-    var bodyWeight = 0;
-    var bodyWeighText = "";
-    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined' || 
-        workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight > 0) {
-            bodyWeight = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
-    }
-
     var rpeReps = parseInt(rpeInput[0][0]);
-    var rpeWeight = parseInt(rpeInput[0][2]) + bodyWeight;
+    var rpeWeight = parseInt(rpeInput[0][2]);
     var rpeRpe = parseInt(rpeInput[0][1]);
     var tgtReps = parseInt(rpeInput[1][0]);
-    var tgtWeight = parseInt(rpeInput[1][2]) + bodyWeight;
+    var tgtWeight = parseInt(rpeInput[1][2]);
     var tgtRpe = parseInt(rpeInput[1][1]);       
 
     // RPE boundary enforcement
@@ -1257,19 +1206,19 @@ function createRpeCalcForm(dayNum, exerNum, tonnageFormData, rpeFormData) {
     return {form, rpeInput}
 }
 
-function promptForBodyWeight(dayNum, exerNum, tonnageFormData) {
-    var promptDefault = "";
-    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined') {
-        promptDefault = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
-    }
-    var bodyWeight = prompt("Enter your body weight if it is to be used in the calculation:", promptDefault);
-    if (bodyWeight != null && bodyWeight != "" && !isNaN(parseInt(bodyWeight))) {
-        workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight = parseInt(bodyWeight);
-        updateStoredData('workoutData', workoutData);
-    }
-    //console.log("BW: "+workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight);
-    displayTonnageOptions(dayNum, exerNum, tonnageFormData);
-}
+// function promptForBodyWeight(dayNum, exerNum, tonnageFormData) {
+//     var promptDefault = "";
+//     if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined') {
+//         promptDefault = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
+//     }
+//     var bodyWeight = prompt("Enter your body weight if it is to be used in the calculation:", promptDefault);
+//     if (bodyWeight != null && bodyWeight != "" && !isNaN(parseInt(bodyWeight))) {
+//         workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight = parseInt(bodyWeight);
+//         updateStoredData('workoutData', workoutData);
+//     }
+//     //console.log("BW: "+workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight);
+//     displayTonnageOptions(dayNum, exerNum, tonnageFormData);
+// }
 
 function promptForDaysToClear(dayNum, exerNum) {
     var daysToSave = prompt("Clear historical data older than ___ day(s) old. (Enter 0 to clear all history):", "");
@@ -1280,7 +1229,7 @@ function promptForDaysToClear(dayNum, exerNum) {
     //clearExerciseHistory(exercise, daysToSave);
 }
 
-function displayTonnageHistory(dayNum, exerNum, tonnageFormData, bodyWeight) {
+function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
     if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum]) {
         var exercise = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum];
         
@@ -1322,8 +1271,8 @@ function displayTonnageHistory(dayNum, exerNum, tonnageFormData, bodyWeight) {
         window.scrollTo(0, 0);
 
         if ((typeof exercise.tonnageHistory != 'undefined') && (typeof exercise.maxHistory != 'undefined')) {
-            printVerticalStripChart('Tonnage', exercise.tonnageHistory, bodyWeight);
-            printVerticalStripChart('Max', exercise.maxHistory, bodyWeight);
+            printVerticalStripChart('Tonnage', exercise.tonnageHistory);
+            printVerticalStripChart('Max', exercise.maxHistory);
         }
 
         var buttonContainer = document.createElement('p');

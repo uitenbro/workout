@@ -1,5 +1,5 @@
 
-    function printVerticalStripChart(divLocation, inputArray, bodyWeight, newMax, newTonnage, limitToSixMonths=false) {
+    function printVerticalStripChart(divLocation, inputArray, newMax, newTonnage, limitToSixMonths=false) {
     // For horizontal bar charts, x and y values must will be "flipped"
     // from their vertical bar counterpart.
     // Array is an array of JSON objects {date:logDate.toISOString(), balance:newBalance}
@@ -41,9 +41,9 @@
             }
             else if (typeof inputArray[i].equivalentMax != 'undefined') {
                 labelsArray[k] = ""; // inputArray[i].equivalentMax;
-                dataArray[k] = [date, inputArray[i].equivalentMax-bodyWeight];
-                if (inputArray[i].equivalentMax-bodyWeight > yMax || k==0) {yMax = inputArray[i].equivalentMax-bodyWeight;}
-                if (inputArray[i].equivalentMax-bodyWeight < yMin || k==0) {yMin = inputArray[i].equivalentMax-bodyWeight;}
+                dataArray[k] = [date, inputArray[i].equivalentMax];
+                if (inputArray[i].equivalentMax > yMax || k==0) {yMax = inputArray[i].equivalentMax;}
+                if (inputArray[i].equivalentMax < yMin || k==0) {yMin = inputArray[i].equivalentMax;}
             }
             k += 1;
             // black[i] = [0,dataArray[i][1]]; // zero axis
@@ -54,7 +54,7 @@
         labelsArray[labelsArray.length-1] = inputArray[inputArray.length-1].overallTonnage;
     }
     else if (typeof inputArray[0].equivalentMax != 'undefined') {
-        labelsArray[labelsArray.length-1] = inputArray[inputArray.length-1].equivalentMax-bodyWeight;
+        labelsArray[labelsArray.length-1] = inputArray[inputArray.length-1].equivalentMax;
     }
 
     // Add data for new Max and Tonnage
@@ -73,10 +73,10 @@
         if (newTonnage < yMin) {yMin = newTonnage;}
     }
     else if (typeof inputArray[0].equivalentMax != 'undefined') {
-        labelsArray1[1] = Math.round(newMax-bodyWeight); // inputArray[i].equivalentMax;
-        dataArray1.push([date, newMax-bodyWeight]);
-        if (newMax-bodyWeight > yMax) {yMax = newMax-bodyWeight;}
-        if (newMax-bodyWeight < yMin) {yMin = newMaxx-bodyWeight;}
+        labelsArray1[1] = Math.round(newMax); // inputArray[i].equivalentMax;
+        dataArray1.push([date, newMax]);
+        if (newMax > yMax) {yMax = newMax;}
+        if (newMax < yMin) {yMin = newMax;}
     }
    
     // Set size of graphs
