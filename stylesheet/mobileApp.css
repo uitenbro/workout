@@ -231,18 +231,24 @@ ul li a.table-right {
 	float: right;
 	text-align: right;
 	margin-top: 0px;
-	width: 41px;
+	width: 40px;
+	padding-left: 5px;
+    padding-right: 5px;
 }
 ul li a.table-left {
 	float: left;
 	text-align: right;
 	margin-top: 0px;
-	width: 40px;
+	width: 34px;
+	padding-left: 5px;
+    padding-right: 5px;
 }
 ul li a.table-middle {
 	text-align: right;
 	margin-top: 0px;
-	width: 50px;
+	width: 46px;
+	padding-left: 5px;
+    padding-right: 5px;
 }
 /* option panel */
 

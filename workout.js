@@ -848,7 +848,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
         li.appendChild(a);
 
         var a = document.createElement('a');
-        a.appendChild(document.createTextNode(percentOfMax+"%"));
+        a.appendChild(document.createTextNode(percentOfMax));
         a.id = "percentMax["+i+"]";
         a.className = "table-right";
         li.appendChild(a);
@@ -1116,7 +1116,7 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
     var li = document.createElement('li');
     var a = document.createElement('a');
     a.className = "table-right";
-    a.appendChild(document.createTextNode("Max"));
+    a.appendChild(document.createTextNode("max"));
     li.appendChild(a);
 
     var a = document.createElement('a');
@@ -1126,12 +1126,12 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
 
     var a = document.createElement('a');
     a.className = "table-left";
-    a.appendChild(document.createTextNode("Sets"));
+    a.appendChild(document.createTextNode("sets"));
     li.appendChild(a);
 
     var a = document.createElement('a');
     a.className = "table-left";
-    a.appendChild(document.createTextNode("Reps"));
+    a.appendChild(document.createTextNode("reps"));
     li.appendChild(a);
     
      var a = document.createElement('a');
@@ -1141,7 +1141,7 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
 
     li.appendChild(a);   var a = document.createElement('a');
     a.className = "table-middle";
-    a.appendChild(document.createTextNode("Load"));
+    a.appendChild(document.createTextNode("load"));
     li.appendChild(a);
     form.appendChild(li);
 
@@ -1151,11 +1151,11 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
         var li = document.createElement('li')
         if (i==0) {
             displayRightValue = rpeMax // +" lbs"
-            displayLeftValue = rpeMax ? Math.round((rpeWeight/rpeMax)*100)+"%" : "0%"
+            displayLeftValue = rpeMax ? Math.round((rpeWeight/rpeMax)*100) : "0"
         }
         else {
             displayRightValue =  rpeMax // +" lbs"
-            displayLeftValue = tgtReps*tgtRpe ? Math.round(rpe_chart[tgtReps][tgtRpe])+"%" : "0%"               
+            displayLeftValue = tgtReps*tgtRpe ? Math.round(rpe_chart[tgtReps][tgtRpe]) : ""               
         }
 
         var a = document.createElement('a');
@@ -1171,10 +1171,10 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
         li.appendChild(a);
 
         if (i==0) {
-            displayValue = "Max"
+            displayValue = "last"
         }
         else {
-             displayValue = "Tgt"              
+             displayValue = "next"              
         }
         var a = document.createElement('a');
         a.appendChild(document.createTextNode(displayValue));
