@@ -706,8 +706,8 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
                 sendTonnageFormData[i][j] = form.elements["tonnageInput["+i+"]["+j+"]"].value;
             }
         }
-        var sendRpeFormData = [[0,0,0],
-                    [0,0,0]]; ;
+        var sendRpeFormData = [[0,10,0],
+                    [0,10,0]]; ;
         for (i=0; i<sendRpeFormData.length; i++) {
             for (j=0; j<sendRpeFormData[i].length; j++) {
                 sendRpeFormData[i][j] = form.elements["rpeInput["+i+"]["+j+"]"].value;
@@ -1051,8 +1051,8 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
     //             sendTonnageFormData[i][j] = document.getElementById("updateTonnage").elements["tonnageInput["+i+"]["+j+"]"].value;
     //         }
     //     }
-    //     var sendRpeFormData = [[0,0,0],
-    //                 [0,0,0]]; ;
+    //     var sendRpeFormData = [[0,10,0],
+    //                 [0,10,0]]; ;
     //     for (i=0; i<sendRpeFormData.length; i++) {
     //         for (j=0; j<sendRpeFormData[i].length; j++) {
     //             sendRpeFormData[i][j] = form.elements["rpeInput["+i+"]["+j+"]"].value;
