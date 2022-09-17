@@ -335,7 +335,7 @@ function browsePrevious(dayNum) {
         printMain(dayNum-1);
     }
     else {
-        dayNum=workoutData.days.length;
+        dayNum=workoutData.days.length-1;
         printHeader(dayNum);
         printMain(dayNum);
     }
