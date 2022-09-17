@@ -1081,8 +1081,8 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
     } else if (typeof exercise.rpeInput != 'undefined') {
           var rpeInput = exercise.rpeInput;
     } else {
-          var rpeInput = [[0,0,0],
-                    [0,0,0]];
+          var rpeInput = [[0,10,0],
+                    [0,10,0]];
     }
 
     // calculate max and rpe loading
