@@ -156,7 +156,7 @@ let touchendX = 0
     
 function checkDirection(dayNum) {
   //console.log(Math.abs(touchendX - touchstartX))
-  if (Math.abs(touchendX - touchstartX) > 20) {
+  if (Math.abs(touchendX - touchstartX) > 55) {
       if (touchendX < touchstartX) browseNext(dayNum); 
       if (touchendX > touchstartX) browsePrevious(dayNum);
   }
