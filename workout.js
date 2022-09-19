@@ -775,12 +775,12 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
         overallSets = overallSets + sets;
 
         // Equivalent Max Calc https://en.wikipedia.org/wiki/One-repetition_maximum Epley formula
-        if (sets*reps > 1) {
+        if (sets*reps > 0) {
             //var equivalentCandidate = Math.round(weight * (1 + reps/30), 2);
             equivalentCandidate[i] = Math.round(weight / (rpe_chart[reps][rpe]/100));
         }
-        else if (sets*reps == 0) {
-            equivalentCandidate[i] = weight;
+        else { // no reps
+            equivalentCandidate[i] = 0;
         }
         
         if (equivalentCandidate[i] > equivalentMax) {equivalentMax = equivalentCandidate[i]};
