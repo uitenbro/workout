@@ -779,12 +779,10 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
             //var equivalentCandidate = Math.round(weight * (1 + reps/30), 2);
             equivalentCandidate[i] = Math.round(weight / (rpe_chart[reps][rpe]/100));
         }
-        else if (sets*reps == 1) {
+        else if (sets*reps == 0) {
             equivalentCandidate[i] = weight;
         }
-        else { // no reps
-            equivalentCandidate[i] = 0;
-        }
+        
         if (equivalentCandidate[i] > equivalentMax) {equivalentMax = equivalentCandidate[i]};
         //console.log("row["+i+"] eqMax "+equivalentCandidate+" tonn: "+tonnageOutput[i]);
     }
