@@ -356,7 +356,7 @@ function handleUpdateSyncFile(response) {
     updateStoredData('googleData', googleData);
   }
   else {
-    alert("Error updating Sync File");
+    alert("Error updating Sync File\n" + JSON.stringify(response, null, 2));
     console.log(response);
   }
   googleSyncInProgress(false);
@@ -373,7 +373,7 @@ function handleReadSyncFile(response) {
       updateStoredData('googleData', googleData);
     }
     else {
-      alert("Error reading Sync File Data, repair Sync File");
+      alert("Error reading Sync File Data, repair Sync File\n" + JSON.stringify(response, null, 2));
     }
   }
   else {
@@ -394,7 +394,7 @@ function handleImportSyncFile(response) {
     updateStoredData('googleData', googleData);
   }
   else {
-    alert("Error importing sync file.")
+    alert("Error importing sync file\n" + JSON.stringify(response, null, 2))
   }
   googleSyncInProgress(false);
   displayGoogleDriveOptions();
