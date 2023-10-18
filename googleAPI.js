@@ -346,7 +346,7 @@ function handleCreateSyncFile(response) {
   displayGoogleDriveOptions();
 }
 
-function handleUpdateSyncFile(response) {
+function handleUpdateSyncFile(response, reason) {
   //workoutData = response;
   //updateStoredData('workoutData', workoutData);
   //console.log(response);
@@ -356,8 +356,8 @@ function handleUpdateSyncFile(response) {
     updateStoredData('googleData', googleData);
   }
   else {
-    alert("Error updating Sync File\n" + JSON.stringify(response, null, 2));
-    console.log(response);
+    alert("Error updating Sync File\n" + JSON.stringify(response, null, 2) + "\nHTTP\n" +JSON.stringify(reason, null, 2));
+    console.log(response, reason);
   }
   googleSyncInProgress(false);
 }
@@ -377,7 +377,7 @@ function handleReadSyncFile(response) {
     }
   }
   else {
-    alert("Error reading/accessing Sync File");
+    alert("Error reading/accessing Sync File\n" + JSON.stringify(response, null, 2));
     console.log(response);
   }
   googleSyncInProgress(false);;
@@ -578,7 +578,7 @@ function handleReadSyncFileMetadata(response) {
     readMetaDataFromGoogleDrive(appFolder, handleReadAppFolderMetadata)
   }
   else {
-    alert ("Error Importing Sync File Metadata");
+    alert ("Error Importing Sync File Metadata\n" + JSON.stringify(response, null, 2));
     console.log(response);
     googleSyncInProgress(false);
   }
@@ -590,7 +590,7 @@ function handleReadAppFolderMetadata(response) {
     updateStoredData('googleData', googleData);
   }
   else {
-    alert ("Error Importing App Folder Metadata");
+    alert ("Error Importing App Folder Metadata\n" + JSON.stringify(response, null, 2));
     console.log(response);
     googleSyncInProgress(false);
   }
