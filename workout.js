@@ -760,7 +760,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
         var weight = parseInt(tonnageInput[i][3]);
 
         // Tonnage input boundary enforcement
-        reps<0 ? reps=0 : (reps>12 ? reps=12 : reps = reps)
+        reps<0 ? reps=0 : (reps>99 ? reps=99 : reps = reps)
         tonnageInput[i][1] = reps;   
 
         sets<0 ? sets=0 : (sets>12 ? sets=12 : sets = sets)
@@ -776,8 +776,12 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
 
         // Equivalent Max Calc https://en.wikipedia.org/wiki/One-repetition_maximum Epley formula
         if (sets*reps > 0) {
-            //var equivalentCandidate = Math.round(weight * (1 + reps/30), 2);
-            equivalentCandidate[i] = Math.round(weight / (rpe_chart[reps][rpe]/100));
+            if (reps > 12) {
+                equivalentCandidate[i] = Math.round(weight * (1 + reps/30), 2);
+            }
+            else {
+                equivalentCandidate[i] = Math.round(weight / (rpe_chart[reps][rpe]/100));
+            }
         }
         else { // no reps
             equivalentCandidate[i] = 0;
@@ -1618,5 +1622,5 @@ const rpe_chart = {
         4: 51.8,
         3.5: 50.5,
         3: 49.1
-    }
+    }    
 }
