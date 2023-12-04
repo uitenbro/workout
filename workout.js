@@ -114,7 +114,7 @@ function printHeader (dayNum) {
     header.id = 'header';
 
     var heading = document.createElement('h1');
-    heading.appendChild(document.createTextNode("Workout"));
+    //heading.appendChild(document.createTextNode("Workout"));
     header.appendChild(heading);
 
     var firstButton = document.createElement('a');
