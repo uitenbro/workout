@@ -228,9 +228,9 @@ function printWorkoutInfo(dayNum) {
     var dayNumber = document.createElement('a');
     dayNumber.className = "right";
     dayNumber.href = "javascript:showWorkoutOptions("+dayNum+");"
-    var printDay = dayNum+1;
-    //dayNumber.appendChild(document.createTextNode("Day " + printDay))
-    dayNumber.appendChild(document.createTextNode(""))
+    var printDay = Math.floor(dayNum/workoutData.days.length)+1;
+    dayNumber.appendChild(document.createTextNode("Week " + printDay))
+    //dayNumber.appendChild(document.createTextNode(""))
     workoutLi.appendChild(dayNumber);
 
     var dayName = document.createElement('a');
