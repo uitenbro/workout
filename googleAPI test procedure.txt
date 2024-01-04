@@ -1,0 +1,110 @@
+{
+Setup
+Manually clear localstorage of googleData (if not clear already)
+Manually remove google access (if not clear already)
+Shift-Reload page
+Console: verify three google loads
+
+Test Nominal
+Press Complete
+Confirm day change
+}
+
+{
+Test Setup New Sync
+Navigate to Google Drive Options
+Confirm google APIs loaded
+Press Setup New Sync
+Sign In to Google
+Dismiss Alert (TODO: confirm order of operations makes sense on phone screen)
+Confirm Signed In Authorized is checked and last write time is populated
+
+Test Nominal works with Sync
+Exit google options
+Press Complete
+Confirm day change
+Console: confirm google drive data updated with local storage and updated write time
+
+Test Read is working
+Take note of day 
+Press Next
+Press Today button
+Confirm noted day appears
+Console: confirm localstorage updated with Google Drive and Read Sync File (TODO: determine if additional Write Sync file can be avoided)
+
+Test Import Sync After Setup
+Navigate to Google Drive Options
+Confirm google APIs loaded
+Press Import Sync
+Select File
+Console: confirm localstorage udpate with Google
+
+Test Stop Sync
+Press Stop Sync
+Dismiss alert (do not remove access)
+Confirm signed in none never never
+
+Test Import Sync After Stop Sync
+Navigate to Google Drive Options
+Confirm google APIs loaded
+Press Import Sync
+Select File
+Console: confirm localstorage udpate with Google
+
+Test Remove Access
+Press Stop Sync
+Dismiss alert 
+Remove acccess via google flow
+Confirm Signed In Authorized is not checked
+Confirm manually localstorage does not have googleData
+}
+
+Execute Setup
+{
+Test Import Sync as Initial Selection
+Navigate to Google Drive Options
+Confirm google APIs loaded
+Press Import Sync
+Login via google flow
+Console confirm access token
+Select File
+Console: confirm localstorage udpate with Google
+Press Complete
+Confirm Day change (note day)
+Press Next
+Press Today
+Confirm day updates to noted day
+
+Test Stop Sync
+Navigate to google options
+Press Stop Sync
+Dismiss alerts
+Confirm Signed In Authorized not checked
+Confirm none never never
+Confirm Setup New Sync button is available
+
+Test Reload with Active Token
+Navigate to Google Drive Options
+Confirm google APIs loaded
+Press Import Sync
+Select File
+Console: confirm localstorage udpate with Google
+Press Complete
+Confirm Day change (note day)
+Press Next
+Press Today
+Confirm day updates to noted day
+Shift-Reload browser
+Console: confirm read write sync file with no authorization prompt
+
+Test Expired token
+Console: googleData.tokenExpiresAtTime = new Date().getTime() -- or wait one hour for expiration
+Press Complete
+Confirm authorization without user intervention
+Confirm day change
+Console: confirm new access token and write
+}
+
+
+
+

@@ -4,6 +4,18 @@ function displayGoogleDriveOptions() {
     //console.log(workoutData)
     //var dayData = workoutData.days[dayNum%(workoutData.days.length)];
     //console.log(dayData)
+    
+    if (googleData == null) { //} || checkGoogleFileExists(googleData.syncFile.id)) == false) { 
+        googleData = {
+          //appFolder : null,
+          clientAccessToken: null,
+          tokenExpiresAtTime: 0,
+          syncFile : null,
+          readTime : "never",
+          writeTime : "never"
+        }
+    }
+
 
     googleOptions = document.createElement('div')
     googleOptions.id = "options";
@@ -28,7 +40,8 @@ function displayGoogleDriveOptions() {
     var GoogleApiIndicator = document.createTextNode("\u20E0");
     var GoogleSignInIndicator = document.createTextNode("\u20E0");
 
-    if (GoogleApi && GooglePicker) {
+    // If all three google services are loaded
+    if (gapiInited && gisInited && GooglePickerInited) {
        GoogleApiIndicator = document.createTextNode("\u2713");
     }
     if (GoogleSignIn) {
@@ -42,7 +55,7 @@ function displayGoogleDriveOptions() {
     a.appendChild(GoogleApiIndicator);
     li.appendChild(a);
     var a = document.createElement('a')
-    a.appendChild(document.createTextNode("Google API Loaded"));
+    a.appendChild(document.createTextNode("Google APIs Loaded"));
     li.appendChild(a);
     ul.appendChild(li);
 
@@ -56,48 +69,48 @@ function displayGoogleDriveOptions() {
     li.appendChild(a);
     ul.appendChild(li);
 
-    if (googleData == null) {
-      var appFolderName = "none";
+    if (googleData.syncFile == null) {
+      //var appFolderName = "none";
       var syncFileName = "none";
       var readTime = "never";
       var writeTime = "never"
     } else {
-      var appFolderName = googleData.appFolder.name;
+      //var Name = googleData.appFolder.name;
       var syncFileName = googleData.syncFile.name;
       var readTime = googleData.readTime;
       var writeTime = googleData.writeTime;
     }
 
-    var li = document.createElement('li')
-    var a = document.createElement('a')
-    if (googleData != null) {
-      a.href = "https://drive.google.com/open?id="+googleData.appFolder.id;
-      a.target = "_blank";
-    }
-    a.className = "right";
-    a.appendChild(document.createTextNode(appFolderName));
-    li.appendChild(a);
-    var a = document.createElement('a')
-    if (googleData != null) {
-      a.target = "_blank";
-      a.href = "https://drive.google.com/open?id="+googleData.appFolder.id;
-    }
-    a.appendChild(document.createTextNode("App Folder"));
-    li.appendChild(a);
-    ul.appendChild(li);
+    // var li = document.createElement('li')
+    // var a = document.createElement('a')
+    // if (googleData != null) {
+    //   a.href = "https://drive.google.com/open?id="+googleData.appFolder.id;
+    //   a.target = "_blank";
+    // }
+    // a.className = "right";
+    // a.appendChild(document.createTextNode(appFolderName));
+    // li.appendChild(a);
+    // var a = document.createElement('a')
+    // if (googleData != null) {
+    //   a.target = "_blank";
+    //   a.href = "https://drive.google.com/open?id="+googleData.appFolder.id;
+    // }
+    // a.appendChild(document.createTextNode("App Folder"));
+    // li.appendChild(a);
+    // ul.appendChild(li);
 
 
     var li = document.createElement('li')
     var a = document.createElement('a')
     a.className = "right";
-    if (googleData != null) {
+    if (googleData.syncFile != null) {
       a.target = "_blank";
       a.href = "https://drive.google.com/open?id="+googleData.syncFile.id;
     }
     a.appendChild(document.createTextNode(syncFileName));
     li.appendChild(a);
     var a = document.createElement('a')
-    if (googleData != null) {
+    if (googleData.syncFile != null) {
       a.target = "_blank";
       a.href = "https://drive.google.com/open?id="+googleData.syncFile.id;
     }
@@ -135,37 +148,30 @@ function displayGoogleDriveOptions() {
      // Action Buttons
     var buttonContainer = document.createElement('p');
   
-    if (!GoogleSignIn) {
-    // Sign In
-    var enable = document.createElement('a');
-    enable.className = "black button";
-    //enable.href = "javascript:enableGoogleDrive()";
-    enable.href = "javascript:signIn();displayGoogleDriveOptions();";
-    enable.appendChild(document.createTextNode("Sign In / Authorize"));
-    buttonContainer.appendChild(enable);
-    }  else {
-      // Sign Out
-      var disable = document.createElement('a');
-      disable.className = "black button";
-      //disable.href = "javascript:disableGoogleDrive()";
-      disable.href = "javascript:signOut();displayGoogleDriveOptions();";
-      disable.appendChild(document.createTextNode("Sign Out"));
-      buttonContainer.appendChild(disable);
 
-      if (googleData != null) {
+      // else {
+      //   // Sign In
+      //   var signin = document.createElement('a');
+      //   signin.className = "black button";
+      //   signin.href = "javascript:signIn();";
+      //   signin.appendChild(document.createTextNode("Authorize Access"));
+      //   buttonContainer.appendChild(signin);
+      // }
+
+      if (googleData.syncFile != null) {
         // Reset 
         var disable = document.createElement('a');
         disable.className = "black button";
         //disable.href = "javascript:disableGoogleDrive()";
-        disable.href = "javascript:resetLocalGoogleData();displayGoogleDriveOptions();";
-        disable.appendChild(document.createTextNode("Reset Sync"));
+        disable.href = "javascript:signOut();displayGoogleDriveOptions();";
+        disable.appendChild(document.createTextNode("Stop Sync"));
         buttonContainer.appendChild(disable);
       } else {
         // Setup Sync
         var sync = document.createElement('a');
         sync.className = "black button";
         //sync.href = "javascript:syncGoogleDrive()";
-        sync.href = "javascript:initGoogleSyncFile();displayGoogleDriveOptions();";
+        sync.href = "javascript:initGoogleSyncFile();";
         sync.appendChild(document.createTextNode("Setup New Sync"));
         buttonContainer.appendChild(sync);
       }
@@ -177,7 +183,17 @@ function displayGoogleDriveOptions() {
       picker.href = "javascript:createPicker();closeOptions()";
       picker.appendChild(document.createTextNode("Import Sync File"));
       buttonContainer.appendChild(picker);
-    }
+          
+      // if (GoogleSignIn) {
+
+      //   // Revoke Access
+      //   var disable = document.createElement('a');
+      //   disable.className = "black button";
+      //   //disable.href = "javascript:disableGoogleDrive()";
+      //   disable.href = "javascript:signOut();displayGoogleDriveOptions();";
+      //   disable.appendChild(document.createTextNode("Remove Access"));
+      //   buttonContainer.appendChild(disable);
+      // }
 
 /*
     // Write
@@ -239,15 +255,15 @@ function displayGoogleDriveOptions() {
 //   }
 // }
 
-function writeToGoogleDrive(name, mimeType, data, parentFolder, callback) {
+function writeToGoogleDrive(name, mimeType, data, callback) {
 
-  if (GoogleUser.hasGrantedScopes(SCOPES)) {
-    if (parentFolder == null) {
-      parentFolderId = 'root';
-    }
-    else {
-      parentFolderId = parentFolder.id;
-    }
+  //if (GoogleUser.hasGrantedScopes(SCOPES)) {
+    // if (parentFolder == null) {
+    //   parentFolderId = 'root';
+    // }
+    // else {
+    //   parentFolderId = parentFolder.id;
+    // }
 
   const boundary = '-------314159265358979323846';
   const delimiter = "\r\n--" + boundary + "\r\n";
@@ -258,7 +274,7 @@ function writeToGoogleDrive(name, mimeType, data, parentFolder, callback) {
   var metadata = {
       'name': name,
       'mimeType': mimeType,
-      parents: [parentFolderId]
+      //parents: [parentFolderId]
     };
 
     var multipartRequestBody =
@@ -278,18 +294,18 @@ function writeToGoogleDrive(name, mimeType, data, parentFolder, callback) {
       'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '",' },
       'body' : multipartRequestBody
     });
-    request.execute(callback);
-  }
-  else {
-    setSigninStatus();
-    alert("Please sign in to Google Drive")
-  }
+    sendRequest(request, callback); 
+  // }
+  // else {
+  //   // setSigninStatus();
+  //   alert("Please sign in to Google Drive")
+  // }
 }
 
 
 function updateToGoogleDrive(file, data, callback) {
 
-  if (GoogleUser.hasGrantedScopes(SCOPES)) {
+  //if (GoogleUser.hasGrantedScopes(SCOPES)) {
 
   const boundary = '-------314159265358979323846';
   const delimiter = "\r\n--" + boundary + "\r\n";
@@ -320,21 +336,21 @@ function updateToGoogleDrive(file, data, callback) {
       'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '",' },
       'body' : multipartRequestBody
     });
-    request.execute(callback);
-  }
-  else {
-    setSigninStatus();
-    alert("Please sign in to Google Drive")
-  }
+    sendRequest(request, callback); 
+  // }
+  // else {
+  //   // setSigninStatus();
+  //   alert("Please sign in to Google Drive")
+  // }
 }
 
-function handleCreateAppFolder(response) {
-  //console.log(response);
-  googleData.appFolder = response;
-  updateStoredData('googleData', googleData);
-  // Create Sync File
-  writeToGoogleDrive('workoutData.json', 'application/json', workoutData, googleData.appFolder, handleCreateSyncFile);
-}
+// function handleCreateAppFolder(response) {
+//   //console.log(response);
+//   googleData.appFolder = response;
+//   updateStoredData('googleData', googleData);
+//   // Create Sync File
+//   writeToGoogleDrive('workoutData.json', 'application/json', workoutData, googleData.appFolder, handleCreateSyncFile);
+// }
 
 function handleCreateSyncFile(response) {
   //console.log(response);
@@ -402,7 +418,7 @@ function handleImportSyncFile(response) {
 
 function createPicker() {
   // https://developers.google.com/picker/docs/reference
-  if (GooglePicker && GoogleUser.hasGrantedScopes(SCOPES) && GoogleAuthToken != "") {
+  if (checkToken(createPicker)) {
 
       console.log("Auth Token: " + GoogleAuthToken)
       var view = new google.picker.View(google.picker.ViewId.DOCS);
@@ -412,19 +428,16 @@ function createPicker() {
           .enableFeature(google.picker.Feature.NAV_HIDDEN)
           //.enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
           .setAppId("workoutapp-1547573908589")
-          .setOAuthToken(GoogleAuthToken)
+          .setOAuthToken(gapi.client.getToken().access_token)
           .addView(view)
           .addView(new google.picker.DocsUploadView())
           .setDeveloperKey("AIzaSyBhUaOQu8zs6mhXELmgIpKEl6Ji-5bw2Uw")
           .setCallback(pickerCallback)
           .setSize(1051,650)
           .build();
-       picker.setVisible(true);
+     picker.setVisible(true);
+     googleSyncInProgress(false);
   }
-  else {
-    alert("Please sign in to Google Drive")
-  }
-  googleSyncInProgress(false);
 }
 
 function pickerCallback(data) {
@@ -437,7 +450,7 @@ function pickerCallback(data) {
 
 function readMetaDataFromGoogleDrive(file, callback) {
 
-  if (GoogleUser.hasGrantedScopes(SCOPES)) {
+  //if (GoogleUser.hasGrantedScopes(SCOPES)) {
 
     // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiclientrequest
     var request = gapi.client.request({
@@ -448,27 +461,18 @@ function readMetaDataFromGoogleDrive(file, callback) {
       //'body' : multipartRequestBody
     });
 
-    request.execute(callback);
-    //request.execute(function(response) {
-      // console.log(response); 
-      // if (response.mimeType == "application/vnd.google-apps.folder") {
-      //   appFolderId = response.id;
-      // }
-      // else if (response.mimeType == "application/json") {
-      //   syncFileId = response.id;  
-      // }
-    //});
-  }
-  else {
-    setSigninStatus();
-    alert("Please sign in to Google Drive");
-    googleSyncInProgress(false);
-  }
+    sendRequest(request, callback); 
+  // }
+  // else {
+  //   // setSigninStatus();
+  //   alert("Please sign in to Google Drive");
+  //   googleSyncInProgress(false);
+  // }
 }
 
 function readFromGoogleDrive(file, callback) {
 
-  if (GoogleUser.hasGrantedScopes(SCOPES)) {
+  //if (GoogleUser.hasGrantedScopes(SCOPES)) {
 
     // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiclientrequest
     var request = gapi.client.request({
@@ -479,22 +483,13 @@ function readFromGoogleDrive(file, callback) {
       //'body' : multipartRequestBody
     });
 
-    request.execute(callback);
-    //request.execute(function(response) {
-      // console.log(response); 
-      // if (response.mimeType == "application/vnd.google-apps.folder") {
-      //   appFolderId = response.id;
-      // }
-      // else if (response.mimeType == "application/json") {
-      //   syncFileId = response.id;  
-      // }
-    //});
-  }
-  else {
-    setSigninStatus();
-    alert("Please sign in to Google Drive");
-    googleSyncInProgress(false);
-  }
+    sendRequest(request, callback); 
+  // }
+  // else {
+  //   // setSigninStatus();
+  //   alert("Please sign in to Google Drive");
+  //   googleSyncInProgress(false);
+  // }
 }
 
 //function checkGoogleFileExists(fileId, callback) {
@@ -502,32 +497,14 @@ function readFromGoogleDrive(file, callback) {
 //}
 
 function initGoogleSyncFile() {
-  if (GoogleUser.hasGrantedScopes(SCOPES)) {  
-    if (googleData == null) { //} || checkGoogleFileExists(googleData.syncFile.id)) == false) { 
-        googleData = {
-          appFolder : null,
-          syncFile : null,
-          readTime : "never",
-          writeTime : "never"
-        }
         createSyncFile('workoutData.json');
-        //alert ("Couldn't find existing sync file. A new sync file is being created"); 
-    } else {
-      alert("Synchronization is already setup.  Reset Sync to start over.");
-      googleSyncInProgress(false);
-    }
-  } else {
-    setSigninStatus();
-    alert("Please sign in to Google Drive")
-    googleSyncInProgress(false);
-  }
 }
 
 function syncToExistingFile(fileId) {
-  if (GoogleUser.hasGrantedScopes(SCOPES)) {  
+  // if (GoogleUser.hasGrantedScopes(SCOPES)) {  
     if (googleData == null) { //} || checkGoogleFileExists(googleData.syncFile.id)) == false) { 
         googleData = {
-          appFolder : null,
+          //appFolder : null,
           syncFile : null,
           readTime : "never",
           writeTime : "never"
@@ -536,25 +513,28 @@ function syncToExistingFile(fileId) {
     googleData.syncFile = {id : fileId };
     getSyncFileMetadata()
     readSyncFile();
-  } else {
-    setSigninStatus();
-    alert("Please sign in to Google Drive");
-    googleSyncInProgress(false);
-  }
+  // } else {
+  //   // setSigninStatus();
+  //   alert("Please sign in to Google Drive");
+  //   googleSyncInProgress(false);
+  // }
 }
 
-function createAppFolder(folderName, parentFolder) {
-  writeToGoogleDrive(folderName, 'application/vnd.google-apps.folder', '', parentFolder, handleCreateAppFolder);
-}
+// function createAppFolder(folderName, parentFolder) {
+//   writeToGoogleDrive(folderName, 'application/vnd.google-apps.folder', '', parentFolder, handleCreateAppFolder);
+// }
 
 function createSyncFile() {
     googleSyncInProgress(true);
-    if (googleData.appFolder == null) { //|| checkGoogleFileExists(googleData.appDir.id) == false) {
-        createAppFolder('WorkoutApp');
-        alert ("An Application Data Folder will be created at the Google Drive root.  All application data will be stored there. You can move this directory to another location on your drive and sync will still work.");
-    } else {
-        writeToGoogleDrive('workoutData.json', 'application/json', workoutData, googleData.appFolder, handleCreateSyncFile);
-    }
+    // if () { //|| checkGoogleFileExists(googleData.appDir.id) == false) {
+    //     createAppFolder('WorkoutApp');
+    //     alert ("An Application Data Folder will be created at the Google Drive root.  All application data will be stored there. You can move this directory to another location on your drive and sync will still work.");
+    // } else {
+        // googleData.appFolder == {"name": "root"}
+        writeToGoogleDrive('workoutData.json', 'application/json', workoutData, handleCreateSyncFile);
+        alert ("All data will be stored in a file called workoutData.json at the Google Drive root.  You can move/remane this file as needed and sync will still work.");
+
+    // }
 }
 
 function readSyncFile() {
@@ -574,8 +554,8 @@ function handleReadSyncFileMetadata(response) {
   if (response.error == undefined) {
     googleData.syncFile = response;
     updateStoredData('googleData', googleData)
-    var appFolder = {id : googleData.syncFile.parents[0]}
-    readMetaDataFromGoogleDrive(appFolder, handleReadAppFolderMetadata)
+    // var appFolder = {id : googleData.syncFile.parents[0]}
+    // readMetaDataFromGoogleDrive(appFolder, handleReadAppFolderMetadata)
   }
   else {
     alert ("Error Importing Sync File Metadata\n" + JSON.stringify(response, null, 2));
@@ -584,18 +564,18 @@ function handleReadSyncFileMetadata(response) {
   }
 }
 
-function handleReadAppFolderMetadata(response) {
-  if (response.error == undefined) {
-    googleData.appFolder = response;
-    updateStoredData('googleData', googleData);
-  }
-  else {
-    alert ("Error Importing App Folder Metadata\n" + JSON.stringify(response, null, 2));
-    console.log(response);
-    googleSyncInProgress(false);
-  }
-  readSyncFile(googleData.syncFile);
-}
+// function handleReadAppFolderMetadata(response) {
+//   if (response.error == undefined) {
+//     googleData.appFolder = response;
+//     updateStoredData('googleData', googleData);
+//   }
+//   else {
+//     alert ("Error Importing App Folder Metadata\n" + JSON.stringify(response, null, 2));
+//     console.log(response);
+//     googleSyncInProgress(false);
+//   }
+//   readSyncFile(googleData.syncFile);
+// }
 
 function updateSyncFile() {
   if (googleData.syncFile != null) {
@@ -609,7 +589,7 @@ function updateSyncFile() {
 function resetLocalGoogleData() {
     googleData = null;
     clearStoredData('googleData');
-    alert("You can now delete the Application Folder on Google Drive.  Setup Sync to turn on Synchronization.")
+    alert("You can now delete the synch file on your Google Drive.  Setup New Sync to turn on synchronization again.")
     displayGoogleDriveOptions();
 }
 
@@ -652,101 +632,181 @@ var GoogleAuth;
 var GoogleUser;
 var GoogleAuthToken = "";
 var GoogleApi = false;
-var GooglePicker = false;
-var GoogleSignIn = false;
+
 var initialized = false;
+
+let tokenClient;
+let gapiInited = false;;
+let gisInited = false;;
+let GooglePickerInited = false;
+var GoogleSignIn = false;
+let tokenExpiresAtTime;
 
 // Scopes requried for this application
 var SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive';
 
-function handleClientLoad() {
-    // Load the API's client and auth2 modules.
-    // Call the initClient function after the modules load.
-    gapi.load('client:auth2', initClient);
-    gapi.load('picker', {'callback': onPickerApiLoad});
-  }
-
-function initClient() {
-  // Retrieve the discovery document for version 3 of Google Drive API.
-  // In practice, your app can retrieve one or more discovery documents.
-  var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-
-  // Initialize the gapi.client object, which app uses to make API requests.
-  // Get API key and client ID from API Console.
-  // 'scope' field specifies space-delimited list of access scopes.
+function gapiInit() {
   gapi.client.init({
-      'apiKey': 'AIzaSyBhUaOQu8zs6mhXELmgIpKEl6Ji-5bw2Uw',
-      'discoveryDocs': [discoveryUrl],
-      'clientId': '225263823157-r3mnuks0si79i07727ph5khd65ptlu20.apps.googleusercontent.com',
-      'scope': SCOPES
-  }).then(function (authResult) {
-    GoogleAuth = gapi.auth2.getAuthInstance();
-    console.log("Google Client API loaded")
-    GoogleApi = true;
-
-    // Listen for sign-in state changes.
-    GoogleAuth.isSignedIn.listen(setSigninStatus);
-
-    // Handle initial sign-in state. (Determine if user is already signed in.)
-    GoogleUser = GoogleAuth.currentUser.get();
-    setSigninStatus(true);
-
-    // Call Application initialization
-    init();
-
+    // NOTE: OAuth2 'scope' and 'client_id' parameters have moved to initTokenClient().
+  })
+  .then(function() {  
+    console.log("Google Client API Loaded");
+    gapiInited = true;
   });
 }
-
 function onPickerApiLoad() {
   console.log("Google Picker Loaded");
-  GooglePicker = true;
+  GooglePickerInited = true;
+}
+
+function gapiLoad() {
+    gapi.load('client', gapiInit)
+    gapi.load('picker', onPickerApiLoad);
+}
+
+//https://developers.google.com/identity/openid-connect/openid-connect
+function gisInit() {
+ tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: '225263823157-r3mnuks0si79i07727ph5khd65ptlu20.apps.googleusercontent.com',
+            scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive',
+            callback: '',  // defined at request time
+            error_callback: handleAccessError
+        });
+  console.log("Google ID Services Loaded");
+  gisInited = true;
+}
+
+function sendRequest(request, callback) {
+  // CheckToken will return true if a valid google authorization token is available.  
+  // It will return false and begin the authorization process if a new token is needed.  
+  // The callback will return to this funciton.
+  if (checkToken(function (){sendRequest(request, callback)})) {   
+    // AuthToken is good so execute the request
+    request.execute(callback);
+  }
+}
+
+function checkToken(callback) {
+  // Conditionally ask users to select the Google Account they'd like to use,
+  // and explicitly obtain their consent to use Drive.
+  // NOTE: To request an access token a user gesture is necessary.
+
+  // if an exiting token is not defined
+  if ((gapi.client.getToken() === null)) {
+    // if an existing token is unavailable or expired
+    if (googleData.clientAccessToken === null || (new Date().getTime() > googleData.tokenExpiresAtTime)) {
+      // get a new token
+      getTokenAndContinue('', callback)
+      return false;
+    } 
+    else {
+      // an existing token is available in localstorage and it hasn't expired so use it
+      gapi.client.setToken({access_token: googleData.clientAccessToken})
+      GoogleSignIn = true;
+      return true;
+    }
+  } 
+  // Token is available so check for token expiration
+  else if (new Date().getTime() > googleData.tokenExpiresAtTime) {
+    // Get an updated token - Skip display of account chooser and consent dialog for an existing session.
+    getTokenAndContinue('none', callback)
+    return false;
+  } 
+  else {
+    // token is good
+    return true;
+  }
+}
+
+function getTokenAndContinue(prompt = '', continuationCode) {
+    tokenClient.callback = (resp) => {
+      // Handle Errors https://developers.google.com/identity/oauth2/web/guides/use-token-model#granular_permissions
+      if (resp.error !== undefined) {
+        googleSyncInProgress(false);
+        alert('Authorization error.\n' + json.STRINGIFY(resp));
+        GoogleSignIn = false;
+        throw(resp);
+      }
+
+      // Update data stores
+      // GIS has automatically updated gapi.client with the newly issued access token.
+      googleData.clientAccessToken = gapi.client.getToken().access_token;
+      console.log('gapi.client access token: ' + JSON.stringify(gapi.client.getToken()));
+      googleData.tokenExpiresAtTime = new Date().getTime() + gapi.client.getToken().expires_in * 1000;
+      console.log('gapi.client access token expires: ', googleData.tokenExpiresAtTime);
+      GoogleSignIn = true;
+      updateStoredData("googleData", googleData)
+      
+      // Now the AuthToken is good so execute the request
+      continuationCode();
+
+    }
+
+    // Prompt the user to select a Google Account and asked for consent to share their data
+    // when establishing a new session.
+    tokenClient.requestAccessToken({prompt: prompt}); 
+}
+
+function handleAccessError(err) {
+  if (err.type == 'popup_failed_to_open') {
+    alert('The Google popup window has failed to open.  Please allow popups.');
+  } else if (err.type == 'popup_closed') {
+    alert('No Google account was authorized.  Please try again')
+  }
+  googleSyncInProgress(false);
 }
 
 function signOut() {
-    var auth2 = gapi.auth2.getAuthInstance();
-    auth2.signOut().then(function () {
-      console.log('User signed out.');
-      msg = gapi.auth2.getAuthInstance().isSignedIn.get();
-      console.log("Sign In Status: " + msg);
-    });
-}
-function signIn() {
-    var auth2 = gapi.auth2.getAuthInstance();
-    auth2.signIn().then(function () {
-      console.log('User signed in.');
-      msg = gapi.auth2.getAuthInstance().isSignedIn.get();
-      console.log("Sign In Status: " + msg);
-    });
-}
-
-// Not currently used
-function revokeAccess() {
-  GoogleAuth.disconnect();
-}
-
-function setSigninStatus() {
-  var GoogleUser = GoogleAuth.currentUser.get();
-  var isAuthorized = GoogleUser.hasGrantedScopes(SCOPES);
-  if (isAuthorized) {
-    console.log( "You are currently signed in and have granted scopes: " + SCOPES);
-    GoogleSignIn = true;
-
-    // Set access token for OAuth end point calls
-    GoogleUser.reloadAuthResponse().then (function(authResponse) {
-      GoogleAuthToken = authResponse.access_token;
-      console.log("Auth Token: " + GoogleAuthToken);  
-      //Just a quick note that the auth_token in the above example is not necessary if you are using gapi.client.init and specifying your token etc.
-    });
-  } else { 
-    console.log("You have not authorized this app or you are signed out");
+    // google.accounts.id.revoke().then(function() {
+    //   console.log('ID token revoked')
+      
+    // }).catch(function(error) {
+    //   console.error('Error revoking ID token:', error);
+    // });
+    resetLocalGoogleData();
     GoogleSignIn = false;
-    googleSyncInProgress(false);
-  }
-  if (initialized == true) {
+    alert('Optionally you can remove Google access for this app in the following window.')
+    window.open('https://myaccount.google.com/permissions', '_blank');
+}
+
+function signIn() {
+  // CheckToken will return true if a valid google authorization token is available.  
+  // It will return false and begin the authorization process if a new token is needed.  
+  // The callback will return to this funciton.
+  if (checkToken(signIn)) {   
+    // AuthToken is good so execute the request
     displayGoogleDriveOptions();
   }
-  initialized = true;
 }
+
+// // Not currently used
+// function revokeAccess() {
+//   GoogleAuth.disconnect();
+// }
+
+// function setSigninStatus() {
+//   var GoogleUser = GoogleAuth.currentUser.get();
+//   var isAuthorized = GoogleUser.hasGrantedScopes(SCOPES);
+//   if (isAuthorized) {
+//     console.log( "You are currently signed in and have granted scopes: " + SCOPES);
+//     GoogleSignIn = true;
+
+//     // Set access token for OAuth end point calls
+//     GoogleUser.reloadAuthResponse().then (function(authResponse) {
+//       GoogleAuthToken = authResponse.access_token;
+//       console.log("Auth Token: " + GoogleAuthToken);  
+//       //Just a quick note that the auth_token in the above example is not necessary if you are using gapi.client.init and specifying your token etc.
+//     });
+//   } else { 
+//     console.log("You have not authorized this app or you are signed out");
+//     GoogleSignIn = false;
+//     googleSyncInProgress(false);
+//   }
+//   if (initialized == true) {
+//     displayGoogleDriveOptions();
+//   }
+//   initialized = true;
+// }
 
 
 

@@ -14,6 +14,9 @@ function readStoredData() {
     if (localStorage.getItem('googleData')) {
         //console.log('found stored googleData');
         googleData = JSON.parse(localStorage.getItem("googleData"));
+        while((gapiInited == false) || (gisInited == false) || (GooglePickerInited == false)) {
+            setTimeout(readStoredData(), 100)
+        }
         readSyncFile(); // need to wait for updates localStorage and local data
     }
 }
