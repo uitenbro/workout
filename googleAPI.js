@@ -158,46 +158,6 @@ function displayGoogleDriveOptions() {
     window.scrollTo(0, 0);
 }
 
-// function writeToGoogleDrive(name, method, data, callback) {
-
-//   //if (GoogleUser.hasGrantedScopes(SCOPES)) {
-
-//   const boundary = '-------314159265358979323846';
-//   const delimiter = "\r\n--" + boundary + "\r\n";
-//   const close_delim = "\r\n--" + boundary + "--";
-
-//   const contentType = 'application/json';
-
-//   var metadata = {
-//       'name': name,
-//       'mimeType': contentType,
-//     };
-
-//     var multipartRequestBody =
-//         delimiter +
-//         'Content-Type: application/json\r\n\r\n' +
-//         JSON.stringify(metadata) +
-//         delimiter +
-//         'Content-Type: ' + 'application/json' + '\r\n\r\n' +
-//         JSON.stringify(data) +
-//         close_delim;
-
-//     // https://developers.google.com/api-client-library/javascript/reference/referencedocs#gapiclientrequest
-//     var request = gapi.client.request({
-//       'path': '/upload/drive/v3/files',
-//       'method': method, // POST for initial write, PATCH for updates
-//       'params': {'uploadType' : 'multipart'},
-//       'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '",' },
-//       'body' : multipartRequestBody
-//     });
-//     sendRequest(request, callback); 
-//   // }
-//   // else {
-//   //   // setSigninStatus();
-//   //   alert("Please sign in to Google Drive")
-//   // }
-// }
-
 function writeToGoogleDrive(file, method, data, callback) {
 
   //if (GoogleUser.hasGrantedScopes(SCOPES)) {
@@ -305,7 +265,7 @@ function createPicker() {
           .setOAuthToken(gapi.client.getToken().access_token)
           .addView(view)
           .addView(new google.picker.DocsUploadView())
-          .setDeveloperKey("AIzaSyBhUaOQu8zs6mhXELmgIpKEl6Ji-5bw2Uw")
+          .setDeveloperKey(googleDeveloperKey)
           .setCallback(pickerCallback)
           .setSize(1051,650)
           .build();
@@ -474,13 +434,6 @@ function sendRequest(request, callback) {
 //  https://developers.google.com/identity/openid-connect/openid-connect
 
 // Globals for Google Authorization
-// var GoogleAuth;
-// var GoogleUser;
-// var GoogleAuthToken = "";
-// var GoogleApi = false;
-
-// var initialized = false;
-
 let tokenClient;
 let gapiInited = false;;
 let gisInited = false;;
@@ -512,7 +465,7 @@ function gapiLoad() {
 
 function gisInit() {
  tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: '225263823157-r3mnuks0si79i07727ph5khd65ptlu20.apps.googleusercontent.com',
+            client_id: googleTokenClientId,
             scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive',
             callback: '',  // defined at request time in getTokenAndContinue()
             error_callback: handleAccessError

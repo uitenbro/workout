@@ -4,6 +4,8 @@ var syncData = workoutData; // syncData is a reference to the local data variabl
 var localStorageName = 'workoutData'
 var syncFileName = "workoutData.json";
 var googleAppId = "workoutapp-1547573908589";
+var googleDeveloperKey = "AIzaSyBhUaOQu8zs6mhXELmgIpKEl6Ji-5bw2Uw";
+var googleTokenClientId = '225263823157-r3mnuks0si79i07727ph5khd65ptlu20.apps.googleusercontent.com'
 
 function validateResponse(response) {
     // Ensure the selected file has a workout in it
