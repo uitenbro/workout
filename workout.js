@@ -156,10 +156,12 @@ function printHeader (dayNum) {
 // setup swipe handler
 let touchstartX = 0
 let touchendX = 0
+let touchstartY = 0
+let touchendY = 0
     
 function checkDirection(dayNum) {
   //console.log(Math.abs(touchendX - touchstartX))
-  if (Math.abs(touchendX - touchstartX) > 55) {
+  if ((Math.abs(touchendX - touchstartX) > 55) && (Math.abs(touchendY - touchstartY) < 55)) {
       if (touchendX < touchstartX) browseNext(dayNum); 
       if (touchendX > touchstartX) browsePrevious(dayNum);
   }
@@ -198,9 +200,11 @@ function printMain(dayNum) {
     // Add swipe handlers
     main.addEventListener('touchstart', e => {
         touchstartX = e.changedTouches[0].screenX
+        touchstartY = e.changedTouches[0].screenY
     })
     main.addEventListener('touchend', e => {
         touchendX = e.changedTouches[0].screenX
+        touchendY = e.changedTouches[0].screenY
         checkDirection(dayNum)
     })
 
