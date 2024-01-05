@@ -136,7 +136,7 @@ function displayGoogleDriveOptions() {
       var sync = document.createElement('a');
       sync.className = "black button";
       //sync.href = "javascript:syncGoogleDrive()";
-      sync.href = "javascript:initGoogleSyncFile();";
+      sync.href = "javascript:createSyncFile();";
       sync.appendChild(document.createTextNode("Setup New Sync"));
       buttonContainer.appendChild(sync);
     }
@@ -273,10 +273,10 @@ function handleUpdateSyncFile(response, reason) {
 function handleReadSyncFile(response) {
   if (response.error === undefined) {
     //console.log(response);
-    // Check if response is a valid JSON object with workoutData
-    if (response.workoutName) {
-      workoutData = response;
-      updateStoredData('workoutData', workoutData);
+    // Check if response is a valid JSON object with appropriate data
+    if (validateResponse(response)) {
+      Object.assign(syncData, response);
+      updateStoredData(localStorageName, syncData);
       console.log("Local Storage updated with Google Drive Data");
       setLastReadTime();
       updateStoredData('googleData', googleData);
@@ -301,7 +301,7 @@ function createPicker() {
       var picker = new google.picker.PickerBuilder()
           .enableFeature(google.picker.Feature.NAV_HIDDEN)
           //.enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-          .setAppId("workoutapp-1547573908589")
+          .setAppId(googleAppId)
           .setOAuthToken(gapi.client.getToken().access_token)
           .addView(view)
           .addView(new google.picker.DocsUploadView())
@@ -386,13 +386,10 @@ function syncToExistingFile(fileId) {
   // }
 }
 
-function initGoogleSyncFile() {
-    createSyncFile('workoutData.json');
-}
 function createSyncFile() {
     googleSyncInProgress(true);
-    writeToGoogleDrive({'id': '', 'name': 'workoutData.json'}, 'POST', workoutData, handleCreateSyncFile);
-    alert ("All data will be stored in a file called workoutData.json at the Google Drive root.  You can move/remane this file as needed and sync will still work.");
+    writeToGoogleDrive({'id': '', 'name': syncFileName}, 'POST', syncData, handleCreateSyncFile);
+    alert ("All data will be stored in a file called " + synchFileName + " on at the Google Drive root.  You can move/remane this file as needed and sync will still work.");
 }
 
 function readSyncFile() {
@@ -423,7 +420,7 @@ function handleReadSyncFileMetadata(response) {
 function updateSyncFile() {
   if (googleData.syncFile != null) {
     googleSyncInProgress(true);;
-    writeToGoogleDrive(googleData.syncFile, 'PATCH', workoutData, handleUpdateSyncFile);
+    writeToGoogleDrive(googleData.syncFile, 'PATCH', syncData, handleUpdateSyncFile);
   } else {
       console.log("Google synchronization is not setup.");
   }

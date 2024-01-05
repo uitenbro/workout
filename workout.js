@@ -1,11 +1,17 @@
-//var workoutDay = 0;
+// stored data object and google drive api constants
 var workoutData = {};
+var syncData = workoutData; // syncData is a reference to the local data variable to be synched
+var localStorageName = 'workoutData'
+var syncFileName = "workoutData.json";
+var googleAppId = "workoutapp-1547573908589";
+
+function validateResponse(response) {
+    // Ensure the selected file has a workout in it
+    return response.workoutName
+}
 
 function readStoredData() {
-    //workoutDay = JSON.parse(localStorage.getItem("workoutDay"));
-    workoutData = JSON.parse(localStorage.getItem("workoutData"));
-    //console.log ("readStoredData");
-    //console.log (workoutDay, workoutData);
+    Object.assign(workoutData, JSON.parse(localStorage.getItem("workoutData")));
     if (typeof workoutData.currentDay == 'undefined') {
         console.log("Updating to new format")
         workoutData.currentDay = JSON.parse(localStorage.getItem("workoutDay"));
@@ -479,10 +485,19 @@ function updateLocalData (dayNum) {
     }
     // Ensure the new workout data was turned into an object and then update it
     if (newWorkoutData != undefined) {
-        // TODO: Add other format and consistency checks for newWorkoutData
-        workoutData = newWorkoutData;
-        updateStoredData('workoutData', workoutData);
-        displayDay(dayNum);
+        if (validateResponse(newWorkoutData)) {
+            Object.assign(workoutData, newWorkoutData);
+            updateStoredData('workoutData', workoutData);
+            displayDay(dayNum);
+        }
+        else {
+            alert("Error reading workout data, repair the workout data\n" + JSON.stringify(response, null, 2))
+            console.log(newWorkoutData)
+        }
+    }
+    else {
+        alert("Error reading workout data, repair the workout data\n" + JSON.stringify(response, null, 2))
+        console.log(newWorkoutData)
     }
 }
 
