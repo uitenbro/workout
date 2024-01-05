@@ -1,8 +1,8 @@
 // stored data object and google drive api constants
 var workoutData = {};
-var syncData = workoutData; // syncData is a reference to the local data variable to be synched
-var localStorageName = 'workoutData'
-var syncFileName = "workoutData.json";
+var syncData = workoutData; // syncData is a reference to the local data variable to be stored and synched
+var localStorageName = 'workoutData' // name of the syncData in localstorage
+var syncFileName = "workoutData.json"; // name of json file for google drive
 var googleAppId = "workoutapp-1547573908589";
 var googleDeveloperKey = "AIzaSyBhUaOQu8zs6mhXELmgIpKEl6Ji-5bw2Uw";
 var googleTokenClientId = '225263823157-r3mnuks0si79i07727ph5khd65ptlu20.apps.googleusercontent.com'
