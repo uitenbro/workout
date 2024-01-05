@@ -9,6 +9,9 @@ Console: verify three google loads
 Test Nominal
 Press Complete
 Confirm day change
+Press Next, Next, Next
+Press Today
+confirm day is displayed correctly
 }
 
 {
@@ -52,12 +55,13 @@ Press Import Sync
 Select File
 Console: confirm localstorage udpate with Google
 
-Test Remove Access
+Test Stop Sync
 Press Stop Sync
 Dismiss alert 
 Remove acccess via google flow
 Confirm Signed In Authorized is not checked
 Confirm manually localstorage does not have googleData
+Confirm Set Up Sync is available
 }
 
 Execute Setup
@@ -75,21 +79,6 @@ Confirm Day change (note day)
 Press Next
 Press Today
 Confirm day updates to noted day
-
-Test Stop Sync
-Navigate to google options
-Press Stop Sync
-Dismiss alerts
-Confirm Signed In Authorized not checked
-Confirm none never never
-Confirm Setup New Sync button is available
-
-Test Reload with Active Token
-Navigate to Google Drive Options
-Confirm google APIs loaded
-Press Import Sync
-Select File
-Console: confirm localstorage udpate with Google
 Press Complete
 Confirm Day change (note day)
 Press Next
