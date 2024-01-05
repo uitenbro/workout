@@ -7,8 +7,8 @@ var googleAppId = "workoutapp-1547573908589";
 var googleDeveloperKey = "AIzaSyBhUaOQu8zs6mhXELmgIpKEl6Ji-5bw2Uw";
 var googleTokenClientId = '225263823157-r3mnuks0si79i07727ph5khd65ptlu20.apps.googleusercontent.com'
 
-function validateResponse(response) {
-    // Ensure the selected file has a workout in it
+function validateJsonData(response) {
+    // Ensure the App Data matches what the application is expecting
     return response.workoutName
 }
 
@@ -487,7 +487,7 @@ function updateLocalData (dayNum) {
     }
     // Ensure the new workout data was turned into an object and then update it
     if (newWorkoutData != undefined) {
-        if (validateResponse(newWorkoutData)) {
+        if (validateJsonData(newWorkoutData)) {
             Object.assign(workoutData, newWorkoutData);
             updateStoredData('workoutData', workoutData);
             displayDay(dayNum);

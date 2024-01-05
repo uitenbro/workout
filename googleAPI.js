@@ -234,7 +234,7 @@ function handleReadSyncFile(response) {
   if (response.error === undefined) {
     //console.log(response);
     // Check if response is a valid JSON object with appropriate data
-    if (validateResponse(response)) {
+    if (validateJsonData(response)) {
       Object.assign(syncData, response);
       updateStoredData(localStorageName, syncData);
       console.log("Local Storage updated with Google Drive Data");
