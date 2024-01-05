@@ -349,7 +349,7 @@ function syncToExistingFile(fileId) {
 function createSyncFile() {
     googleSyncInProgress(true);
     writeToGoogleDrive({'id': '', 'name': syncFileName}, 'POST', syncData, handleCreateSyncFile);
-    alert ("All data will be stored in a file called " + synchFileName + " on at the Google Drive root.  You can move/remane this file as needed and sync will still work.");
+    alert ("All data will be stored in a file called " + syncFileName + " on at the Google Drive root.  You can move/remane this file as needed and sync will still work.");
 }
 
 function readSyncFile() {
