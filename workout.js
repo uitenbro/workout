@@ -804,7 +804,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
                 equivalentCandidate[i] = Math.round(weight / ((rpe_chart[1][rpe]/100) / (1 + reps/30)));
             }
             else { //rep = 1
-                equivalentCandidate[i] = Math.round(weight / (rpe_chart[reps][rpe]/100));
+                equivalentCandidate[i] = Math.round(weight / (rpe_chart[1][rpe]/100));
             }
         }
         else { // no reps
@@ -1120,10 +1120,10 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
     var tgtRpe = parseInt(rpeInput[1][1]);       
 
     // RPE boundary enforcement
-    rpeReps<1 ? rpeReps=1 : (rpeReps>12 ? rpeReps=12 : rpeReps = rpeReps)
+    rpeReps<1 ? rpeReps=1 : rpeReps = rpeReps
     rpeInput[0][0] = rpeReps;   
 
-    tgtReps<1 ? tgtReps=1 : (tgtReps>12 ? tgtReps=12 : tgtReps = tgtReps)
+    tgtReps<1 ? tgtReps=1 : tgtReps = tgtReps
     rpeInput[1][0] = tgtReps;
 
     rpeRpe<3 ? rpeRpe=3 : (rpeRpe>10 ? rpeRpe=10 : rpeRpe = rpeRpe)
@@ -1132,12 +1132,22 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
     tgtRpe<3 ? tgtRpe=3 : (tgtRpe>10 ? tgtRpe=10 : tgtRpe = tgtRpe)
     rpeInput[1][1] = tgtRpe;
 
-    var rpeMax = rpeReps*rpeRpe ? (rpeWeight / (rpe_chart[rpeReps][rpeRpe]/100)) : 0 // lifted weight over the rpe table percentage
-    var tgtWeight = tgtReps*tgtRpe ? ((rpe_chart[tgtReps][tgtRpe]/100) * rpeMax) : 0// rpeMax * rpe table percentage
+    var rpeMax = 0 // lifted weight over the rpe table/Epley percentage
+    if (rpeReps > 1) {
+        rpeMax = Math.round(rpeWeight / ((rpe_chart[1][rpeRpe]/100) / (1 + rpeReps/30)));
+    }
+    else if (rpeReps == 1) {
+        rpeMax = Math.round(rpeWeight / (rpe_chart[1][rpeRpe]/100));
+    }
 
-    rpeMax = Math.round(rpeMax, 2)
-    tgtWeight = Math.round(tgtWeight, 2)
-    
+    var tgtWeight = 0 // rpeMax * rpe table/Epley percentage
+    if (tgtReps > 1) {
+        tgtWeight = Math.round(rpeMax * ((rpe_chart[1][tgtRpe]/100) / (1 + tgtReps/30)));
+    }
+    else if (tgtReps == 1) {
+        tgtWeight = Math.round(rpeMax * (rpe_chart[1][tgtRpe]/100));
+    }
+        
     // rpe header row
     var li = document.createElement('li');
     var a = document.createElement('a');
@@ -1180,8 +1190,8 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
             displayLeftValue = rpeMax ? Math.round((rpeWeight/rpeMax)*100) : "0"
         }
         else {
-            displayRightValue =  rpeMax // +" lbs"
-            displayLeftValue = tgtReps*tgtRpe ? Math.round(rpe_chart[tgtReps][tgtRpe]) : ""               
+            displayRightValue =  rpeMax // +" lbs"  
+            displayLeftValue = (tgtReps*tgtRpe && rpeMax) ? Math.round(tgtWeight/rpeMax*100) : "0"               
         }
 
         var a = document.createElement('a');
