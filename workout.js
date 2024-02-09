@@ -9,7 +9,7 @@ var googleTokenClientId = '225263823157-r3mnuks0si79i07727ph5khd65ptlu20.apps.go
 
 function validateJsonData(response) {
     // Ensure the App Data matches what the application is expecting
-    return response.workoutName
+    return response.workouts
 }
 
 function readStoredData() {
@@ -488,7 +488,8 @@ function updateLocalData (dayNum) {
     // Ensure the new workout data was turned into an object and then update it
     if (newWorkoutData != undefined) {
         if (validateJsonData(newWorkoutData)) {
-            Object.assign(workoutData, newWorkoutData);
+            var selectedWorkout = "HooperMuscleBuilding" // selectedWorkout(newWorkoutData)
+            Object.assign(workoutData, newWorkoutData.workouts[selectedWorkout]);
             updateStoredData('workoutData', workoutData);
             displayDay(dayNum);
         }
@@ -1657,4 +1658,97 @@ const rpe_chart = {
         3.5: 50.5,
         3: 49.1
     }    
+}
+
+
+function convertWorkoutData(data) {
+    var original = JSON.parse(localStorage.getItem(data))
+    localStorage.setItem('originalWorkoutData', JSON.stringify(original))
+
+    var workoutKey = original.workoutName.replace(/\s/g, "")
+    var updated = JSON.parse(localStorage.getItem('updatedWorkouts'))
+    if (!updated.workouts) {
+        updated = {workouts: {}, exerciseDb: {}}
+    }
+    updated.workouts[workoutKey] = original
+
+    // Move exercise log items to the exercise database
+    original.days.forEach( day => {
+        day.exercises.forEach( exercise => {
+            var exerciseKey = getExerciseKey(exercise.exerciseName, updated.exerciseDb)
+            updated.exerciseDb[exerciseKey] = {
+                rpeInput : exercise.rpeInput, 
+                maxHistory : exercise.maxHistory,
+                tonnageInput : exercise.tonnageInput,
+                tonnageHistory : exercise.tonnageHistory
+            }
+        })
+    })
+    // Remove exercise log items from the workout data and add exerciseKey
+    updated.workouts[workoutKey].days.forEach( day =>  {
+        day.exercises.forEach( exercise =>  {
+            var exerciseKey = getExerciseKey(exercise.exerciseName, updated.exerciseDb)
+            exercise.exerciseKey = exerciseKey
+            delete exercise.rpeInput 
+            delete exercise.maxHistory
+            delete exercise.tonnageInput
+            delete exercise.tonnageHistory
+    
+        })
+    })
+    // combine duplicate exercises
+    for (let exerciseKey in updated.exerciseDb) {
+        let counter = 1
+        while (updated.exerciseDb.hasOwnProperty(exerciseKey+"_"+counter)) {
+            updated.exerciseDb[exerciseKey].maxHistory = combineAndSortArrays(updated.exerciseDb[exerciseKey].maxHistory,updated.exerciseDb[exerciseKey+"_"+counter].maxHistory)
+            updated.exerciseDb[exerciseKey].tonnageHistory = combineAndSortArrays(updated.exerciseDb[exerciseKey].tonnageHistory,updated.exerciseDb[exerciseKey+"_"+counter].tonnageHistory)
+            delete updated.exerciseDb[exerciseKey+"_"+counter]
+            counter++
+        }
+    }
+    console.log(updated)
+    localStorage.setItem('updatedWorkouts', JSON.stringify(updated))
+}
+
+function getExerciseKey(key, dict) {
+    let uniqueKey = key.replace(/\s/g, '');
+    let counter = 1;
+
+    while (dict.hasOwnProperty(uniqueKey)) {
+        uniqueKey = key.replace(/\s/g, '') + '_' + counter;
+        counter++;
+    }
+    return uniqueKey
+}
+
+function combineAndSortArrays(arr1, arr2) {
+    // If both arrays are undefined, return an empty array
+    if (!arr1 && !arr2) {
+        return [];
+    }
+    // If one of the arrays is undefined, return the other array sorted
+    else if (!arr1) {
+        return arr2.sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+    else if (!arr2) {
+        return arr1.sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+
+    // Combine the two arrays into one
+    let combinedArray = arr1.concat(arr2);
+
+    // Sort the combined array by the 'date' property
+    combinedArray.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    return combinedArray;
+
+}
+
+function combineExerciseData(first, second) {
+    var updatedWorkouts = JSON.parse(localStorage.getItem('updatedWorkouts'))
+    updatedWorkouts.exerciseDb[first].maxHistory = combineAndSortArrays(updatedWorkouts.exerciseDb[first].maxHistory, updatedWorkouts.exerciseDb[second].maxHistory)
+    updatedWorkouts.exerciseDb[first].tonnageHistory = combineAndSortArrays(updatedWorkouts.exerciseDb[first].tonnageHistory, updatedWorkouts.exerciseDb[second].tonnageHistory)
+    delete updatedWorkouts.exerciseDb[second]
+    localStorage.setItem('updatedWorkouts', JSON.stringify(updatedWorkouts))
+    console.log(updatedWorkouts)
 }
