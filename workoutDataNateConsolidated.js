@@ -1,3 +1,5 @@
+
+var workoutJson = `
 {
   "workouts": {
     "PowerLiftingWorkout": {
@@ -1421,7 +1423,7 @@
           "dayName": "Saturday - Extra Volume",
           "exercises": [
             {
-              "exerciseName": "Incline Dumbbell Bench Press",
+              "exerciseName": "Incline Dumbbell Press",
               "sets": [
                 {
                   "weight": "50/75 lbs",
@@ -14136,4 +14138,6 @@
       "tonnageHistory": []
     }
   }
-}    
+}    `
+
+var workout = JSON.parse(workoutJson);

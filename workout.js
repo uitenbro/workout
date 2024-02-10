@@ -1,5 +1,6 @@
 // stored data object and google drive api constants
 var workoutData = {};
+var selectedWorkoutData = {}
 var syncData = workoutData; // syncData is a reference to the local data variable to be stored and synched
 var localStorageName = 'workoutData' // name of the syncData in localstorage
 var syncFileName = "workoutData.json"; // name of json file for google drive
@@ -14,9 +15,9 @@ function validateJsonData(response) {
 
 function readStoredData() {
     Object.assign(workoutData, JSON.parse(localStorage.getItem("workoutData")));
-    if (typeof workoutData.currentDay == 'undefined') {
-        console.log("Updating to new format")
-        workoutData.currentDay = JSON.parse(localStorage.getItem("workoutDay"));
+    if (typeof workoutData.selectedWorkout == 'undefined') {
+        console.log("No selected workout.  Defaulting to first workout")
+        workoutData.selectedWorkout = Object.keys(workoutData.workouts)[0];
         updateStoredData('workoutData', workoutData)
     } 
     if (localStorage.getItem('googleData')) {
@@ -27,6 +28,7 @@ function readStoredData() {
         }
         readSyncFile(); // need to wait for updates localStorage and local data
     }
+    selectedWorkoutData = workoutData.workouts[workoutData.selectedWorkout]
 }
 
 function updateStoredData(item, value) {
@@ -45,16 +47,6 @@ function initializeStoredData () {
     //console.log('create default workoutData');
     localStorage.setItem('workoutData', workoutJson);
   }
-
-
-  // if (localStorage.getItem('workoutDay')) {
-  //   //console.log('found stored workoutDay');
-  // }
-  // else {
-  //   //console.log('create default workoutDay');
-  //   localStorage.setItem('workoutDay', workoutDay);
-  // }
-
 }
 
 function clearStoredData(dataItem) {
@@ -66,33 +58,6 @@ function clearStoredData(dataItem) {
   //   //console.log('found stored workoutDay');
   // }
 }
-
-/*
-<html>
-<body>
-
-<h2>Use the XMLHttpRequest to get the content of a file.</h2>
-<p>The content is written in JSON format, and can easily be converted into a JavaScript object.</p>
-
-<p id="demo"></p>
-
-<script>
-var xmlhttp = new XMLHttpRequest();
-xmlhttp.onreadystatechange = function() {
-  if (this.readyState == 4 && this.status == 200) {
-    var myObj = JSON.parse(this.responseText);
-    document.getElementById("demo").innerHTML = myObj.name;
-  }
-};
-xmlhttp.open("GET", "json_demo.txt", true);
-xmlhttp.send();
-</script>
-
-<p>Take a look at <a href="json_demo.txt" target="_blank">json_demo.txt</a></p>
-
-</body>
-</html>
-*/
 
 function init () {
     initializeStoredData();
@@ -106,18 +71,9 @@ function printAll(){
 }
 
 function printHeader (dayNum) {
-   /* 
-   <div id="header">
-        <h1>Workout</h1>
-        <a href="" class="Action" id="firstButton">Complete</a>
-        <a href="" class="Action" id="secondButton">Reset</a>
-        <a href="" class="Action" id="thirdButton">Previous</a>
-        <a href="" class="Action" id="fourthButton">Next</a>
-    </div> 
-    */
 
     if (typeof dayNum == 'undefined') {
-        dayNum = workoutData.currentDay;
+        dayNum = selectedWorkoutData.currentDay;
     }
     //console.log("dayNum = " + dayNum);
 
@@ -176,32 +132,10 @@ function checkDirection(dayNum) {
 }
 
 function printMain(dayNum) {
-    /*
-    <ul>    
-    <li>
-    <a href ="" class="mainright"></a>
-    <a href="" class="main">Natural Lifter's Workout</a>
-    <a href ="" class="right">Day 2</a>
-    <a href="" class="">Monday - Pull 1</a>
-    </li>
-    </ul>
-
-    <ul>
-    <li>
-    <a href ="" class="mainright"></a>
-    <a href="" class="main">Romainian Deadlift</a>
-    </li>
-    <li></li>
-    </li>
-    </ul>
-    */
 
     if (typeof dayNum == 'undefined') {
-        dayNum = workoutData.currentDay;
+        dayNum = selectedWorkoutData.currentDay;
     }
-    //console.log("dayNum = " + dayNum);
-    //readStoredData();
-
 
     var main = document.createElement('div');
     main.id = 'main';
@@ -220,7 +154,7 @@ function printMain(dayNum) {
     main.appendChild(printWorkoutInfo(dayNum));
     
     // Print each Exercise
-    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    var dayData = selectedWorkoutData.days[dayNum%(selectedWorkoutData.days.length)];
     for (i in dayData.exercises) {
         //main.appendChild(printExercise(dayData.exercises[i]));
         main.appendChild(printExercise(dayNum, i));
@@ -237,19 +171,19 @@ function printWorkoutInfo(dayNum) {
     var workoutName = document.createElement('a');
     workoutName.href = "javascript:showWorkoutOptions("+dayNum+");"
     workoutName.className = "main";
-    workoutName.appendChild(document.createTextNode(workoutData.workoutName));
+    workoutName.appendChild(document.createTextNode(selectedWorkoutData.workoutName));
     workoutLi.appendChild(workoutName);
 
     var dayNumber = document.createElement('a');
     dayNumber.className = "right";
     dayNumber.href = "javascript:showWorkoutOptions("+dayNum+");"
-    var printDay = Math.floor(dayNum/workoutData.days.length)+1;
+    var printDay = Math.floor(dayNum/selectedWorkoutData.days.length)+1;
     dayNumber.appendChild(document.createTextNode("Week " + printDay))
     //dayNumber.appendChild(document.createTextNode(""))
     workoutLi.appendChild(dayNumber);
 
     var dayName = document.createElement('a');
-    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    var dayData = selectedWorkoutData.days[dayNum%(selectedWorkoutData.days.length)];
     dayName.href = "javascript:showWorkoutOptions("+dayNum+");"
     dayName.className = "";
     dayName.appendChild(document.createTextNode(dayData.dayName));
@@ -261,8 +195,9 @@ function printWorkoutInfo(dayNum) {
 }
 
 function printExercise(dayNum, exerNum) {
-    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    var dayData = selectedWorkoutData.days[dayNum%(selectedWorkoutData.days.length)];
     var exercise = dayData.exercises[exerNum];
+    var exerciseDb = workoutData.exerciseDb[exercise.exerciseKey]
     //console.log(exercise);
     
     var ul = document.createElement('ul')
@@ -271,9 +206,9 @@ function printExercise(dayNum, exerNum) {
     var a = document.createElement('a');
     a.className = "right";
     a.href = "javascript:displayTonnageOptions("+dayNum+","+exerNum+")";
-    if (typeof exercise.tonnageHistory != 'undefined') {
-        a.appendChild(document.createTextNode("m:"+ parseInt(exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax) +
-            " v:"+exercise.tonnageHistory[exercise.tonnageHistory.length-1].overallTonnage));
+    if (exerciseDb.tonnageHistory?.length>0) {
+        a.appendChild(document.createTextNode("m:"+ parseInt(exerciseDb.maxHistory[exerciseDb.maxHistory.length-1].equivalentMax) +
+            " v:"+exerciseDb.tonnageHistory[exerciseDb.tonnageHistory.length-1].overallTonnage));
     } else {
         a.appendChild(document.createTextNode("m:- v:-"));
     }
@@ -316,14 +251,14 @@ function printExercise(dayNum, exerNum) {
 
 function completeDay(dayNum) {
     //console.log("Complete");
-    workoutData.currentDay = dayNum+1;
+    selectedWorkoutData.currentDay = dayNum+1;
     updateStoredData('workoutData', workoutData)
     printHeader(dayNum+1);
     printMain(dayNum+1);
 }
 function resetToday() {
     //console.log("Reset");
-    workoutData.currentDay = 0;
+    selectedWorkoutData.currentDay = 0;
     updateStoredData('workoutData', workoutData)
     printHeader(0);
     printMain(0);
@@ -332,8 +267,8 @@ function clearHistory() {
     var daysToSave = prompt("Clear historical data older than ___ day(s) old. (Enter 0 to clear all history):", "");
     if (daysToSave != null && daysToSave != "" && !isNaN(parseInt(daysToSave))) {
         daysToSave = parseInt(daysToSave); 
-        for (dayNum=0; dayNum<workoutData.days.length; dayNum++) { 
-            for (exerNum=0;  exerNum<workoutData.days[dayNum].exercises.length; exerNum++) {
+        for (dayNum=0; dayNum<selectedWorkoutData.days.length; dayNum++) { 
+            for (exerNum=0;  exerNum<selectedWorkoutData.days[dayNum].exercises.length; exerNum++) {
                 //console.log(dayNum,exerNum)
                 clearExerciseHistory(dayNum, exerNum, daysToSave, saveImmediately = false); 
             }
@@ -350,7 +285,7 @@ function browsePrevious(dayNum) {
         printMain(dayNum-1);
     }
     else {
-        dayNum=workoutData.days.length-1;
+        dayNum=selectedWorkoutData.days.length-1;
         printHeader(dayNum);
         printMain(dayNum);
     }
@@ -368,50 +303,52 @@ function displayDay(dayNum) {
 }
 
 function clearExerciseHistory(dayNum, exerNum, daysToSave, saveImmediately = true) {
-    var exercise = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum];
+    var exercise = selectedWorkoutData.days[dayNum % selectedWorkoutData.days.length].exercises[exerNum];
+    var exerciseDb = workoutData.exerciseDb[exercise.exerciseKey]
+
     var thresholdDate = new Date() 
     thresholdDate.setDate(thresholdDate.getDate() - daysToSave)
     //console.log("daysToSave:", daysToSave)
     console.log("thresholdDate:", (thresholdDate))
 
-    if (typeof exercise.tonnageHistory != 'undefined') {
-        var testDate = new Date(exercise.tonnageHistory[0].date)
+    if (typeof exerciseDb.tonnageHistory != 'undefined') {
+        var testDate = new Date(exerciseDb.tonnageHistory[0].date)
         while (testDate < thresholdDate) {
-            console.log("tonnDate:", exercise.tonnageHistory[0].date, "cleared")
-            exercise.tonnageHistory.shift()
-            if (exercise.tonnageHistory.length) {
-                testDate = new Date(exercise.tonnageHistory[0].date)
+            console.log("tonnDate:", exerciseDb.tonnageHistory[0].date, "cleared")
+            exerciseDb.tonnageHistory.shift()
+            if (exerciseDb.tonnageHistory.length) {
+                testDate = new Date(exerciseDb.tonnageHistory[0].date)
             }
             else {
                 testDate= new Date()
-                delete exercise["tonnageHistory"]
+                delete exerciseDb["tonnageHistory"]
             }
         }
     }
 
-    if (typeof exercise.maxHistory != 'undefined') {
-        var testDate = new Date(exercise.maxHistory[0].date)
+    if (typeof exerciseDb.maxHistory != 'undefined') {
+        var testDate = new Date(exerciseDb.maxHistory[0].date)
         while (testDate < thresholdDate) {
-            console.log("maxDate:", (exercise.maxHistory[0].date), " cleared")
-            exercise.maxHistory.shift()
-            if (exercise.maxHistory.length) {
-                testDate = new Date(exercise.maxHistory[0].date)
+            console.log("maxDate:", (exerciseDb.maxHistory[0].date), " cleared")
+            exerciseDb.maxHistory.shift()
+            if (exerciseDb.maxHistory.length) {
+                testDate = new Date(exerciseDb.maxHistory[0].date)
             }
             else {
                 testDate= new Date()
-                delete exercise["maxHistory"]
+                delete exerciseDb["maxHistory"]
             }
         }
     }
-    workoutData.days[dayNum % workoutData.days.length].exercises[exerNum] = exercise
+    selectedWorkoutData.days[dayNum % selectedWorkoutData.days.length].exercises[exerNum] = exercise
     if (saveImmediately == true) {
         updateStoredData('workoutData', workoutData)
     }
 }
 
 function displayLocalDataOptions(dayNum, exerNum) {
-    //console.log(workoutData)
-    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    //console.log(selectedWorkoutData)
+    var dayData = selectedWorkoutData.days[dayNum%(selectedWorkoutData.days.length)];
     //console.log(dayData)
 
     locDataIO = document.createElement('div')
@@ -429,7 +366,7 @@ function displayLocalDataOptions(dayNum, exerNum) {
 
     var h2 = document.createElement('h2');
     h2.appendChild(cancel);
-    h2.appendChild(document.createTextNode(workoutData.workoutName+" - JSON Workout Data"));
+    h2.appendChild(document.createTextNode(selectedWorkoutData.workoutName+" - JSON Workout Data"));
     locDataIO.appendChild(h2);
 
     var ul = document.createElement('ul');
@@ -488,8 +425,6 @@ function updateLocalData (dayNum) {
     // Ensure the new workout data was turned into an object and then update it
     if (newWorkoutData != undefined) {
         if (validateJsonData(newWorkoutData)) {
-            var selectedWorkout = "HooperMuscleBuilding" // selectedWorkout(newWorkoutData)
-            Object.assign(workoutData, newWorkoutData.workouts[selectedWorkout]);
             updateStoredData('workoutData', workoutData);
             displayDay(dayNum);
         }
@@ -504,9 +439,83 @@ function updateLocalData (dayNum) {
     }
 }
 
+function selectWorkout() {
+
+    locDataIO = document.createElement('div')
+    locDataIO.id = "options";
+    locDataIO.className = "optionpanel";
+    locDataIO.style.display = "block"
+
+    // Cancel
+    var cancel = document.createElement('a');
+    var img = document.createElement('img');
+    img.src = "images/cancel.png";
+    cancel.appendChild(img);
+    cancel.href = "javascript:closeOptions();";
+    //weightUpdate.appendChild(cancel);
+
+    var h2 = document.createElement('h2');
+    h2.appendChild(cancel);
+    h2.appendChild(document.createTextNode("Select Workout"));
+    locDataIO.appendChild(h2);
+
+    var ul = document.createElement('ul');
+
+    // Form
+    var form = document.createElement('form');
+    //form.method = "post";
+    //form.action = "javascript:updateForecastSettings(forecastSettings)";
+    form.name = "selectWorkoutForm";
+
+    var li = document.createElement('li')
+    var a = document.createElement('a')
+
+    // workouts
+    var li = document.createElement('li');
+    var accountList = document.createElement('select');
+    accountList.name = "workoutSelect";
+    accountList.size = 10;
+    for (key in workoutData.workouts) {
+    var option = document.createElement('option');
+    option.value = key;
+    if (key == workoutData.selectedWorkout) {option.selected = "selected";}
+    option.appendChild(document.createTextNode(workoutData.workouts[key].workoutName)); 
+    accountList.appendChild(option);
+    }
+    li.appendChild(accountList);
+    form.appendChild(li);
+    ul.appendChild(form);
+
+    locDataIO.appendChild(ul);
+
+    // Action Buttons
+    var buttonContainer = document.createElement('p');
+
+    // Save
+    var save = document.createElement('a');
+    save.className = "black button";
+    save.href = "javascript:updateSelectedWorkout(document.selectWorkoutForm.workoutSelect.value);" // ;javascript:setActiveAccount(document.accountUpdateForm.accountSelect.value
+    save.appendChild(document.createTextNode("Select"));
+    buttonContainer.appendChild(save);
+    locDataIO.appendChild(buttonContainer);
+
+    // Add to the page and hide main panel
+    document.getElementById('options').replaceWith(locDataIO);
+    document.getElementById('header').style.display = 'none';
+    document.getElementById('main').style.display = 'none';
+    window.scrollTo(0, 0);
+    
+}
+function updateSelectedWorkout(selectedWorkoutKey) {
+    workoutData.selectedWorkout = selectedWorkoutKey;
+    updateStoredData('workoutData', workoutData);
+    closeOptions();
+    init();
+}
+
 function displayWeightOptions(dayNum, exerNum) {
-    //console.log(workoutData)
-    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    //console.log(selectedWorkoutData)
+    var dayData = selectedWorkoutData.days[dayNum%(selectedWorkoutData.days.length)];
     //console.log(dayData)
 
     weightUpdate = document.createElement('div')
@@ -627,27 +636,30 @@ function displayWeightOptions(dayNum, exerNum) {
 }
 function updateWeights (dayNum, exerNum) {
     //console.log("update weights" + dayNum + " " + exerNum);
-    dayNum = dayNum % workoutData.days.length;
-    workoutData.days[dayNum].exercises[exerNum].exerciseName = document.forms['updateWeight']['exerciseName['+exerNum+']'].value
-    var setsLengthPlusOne = workoutData.days[dayNum].exercises[exerNum].sets.length+1
+    dayNum = dayNum % selectedWorkoutData.days.length;
+    selectedWorkoutData.days[dayNum].exercises[exerNum].exerciseName = document.forms['updateWeight']['exerciseName['+exerNum+']'].value
+    var setsLengthPlusOne = selectedWorkoutData.days[dayNum].exercises[exerNum].sets.length+1
     // check each row and one additional row for new set definition
     for (i=0; i<setsLengthPlusOne; i++) {
         //console.log("during "+document.forms['updateWeight']['weight['+i+']'].value)
-        if (i < workoutData.days[dayNum].exercises[exerNum].sets.length) {
-            workoutData.days[dayNum].exercises[exerNum].sets[i].weight = document.forms['updateWeight']['weight['+i+']'].value;
-            workoutData.days[dayNum].exercises[exerNum].sets[i].label = document.forms['updateWeight']['label['+i+']'].value;
+        if (i < selectedWorkoutData.days[dayNum].exercises[exerNum].sets.length) {
+            selectedWorkoutData.days[dayNum].exercises[exerNum].sets[i].weight = document.forms['updateWeight']['weight['+i+']'].value;
+            selectedWorkoutData.days[dayNum].exercises[exerNum].sets[i].label = document.forms['updateWeight']['label['+i+']'].value;
         } else if (document.forms['updateWeight']['weight['+i+']'].value!="" || document.forms['updateWeight']['label['+i+']'].value!="") {
-            workoutData.days[dayNum].exercises[exerNum].sets.push({"Load":document.forms['updateWeight']['weight['+i+']'].value,"label":document.forms['updateWeight']['label['+i+']'].value})
+            selectedWorkoutData.days[dayNum].exercises[exerNum].sets.push({"Load":document.forms['updateWeight']['weight['+i+']'].value,"label":document.forms['updateWeight']['label['+i+']'].value})
         }
     }
+    // TODO: Add field to the form to change the execiseKey then add it to the database here 
     updateStoredData('workoutData', workoutData);
 }
 
 
 function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
-    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    var dayData = selectedWorkoutData.days[dayNum%(selectedWorkoutData.days.length)];
     //console.log(dayData)
     var exercise = dayData.exercises[exerNum];
+    var exerciseDb = workoutData.exerciseDb[exercise.exerciseKey]
+
     var tonnageOutput = [];
     var equivalentCandidate = [];
     var overallTonnage = 0;
@@ -680,9 +692,9 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     var a = document.createElement('a');
     a.className = "right";
 
-    if (typeof exercise.tonnageHistory != 'undefined') {
-        a.appendChild(document.createTextNode("m:"+ parseInt(exercise.maxHistory[exercise.maxHistory.length-1].equivalentMax) +
-            " v:"+exercise.tonnageHistory[exercise.tonnageHistory.length-1].overallTonnage));
+    if (exerciseDb.tonnageHistory?.length>0) {
+        a.appendChild(document.createTextNode("m:"+ parseInt(exerciseDb.maxHistory[exerciseDb.maxHistory.length-1].equivalentMax) +
+            " v:"+exerciseDb.tonnageHistory[exerciseDb.tonnageHistory.length-1].overallTonnage));
     } else {
         a.appendChild(document.createTextNode("m:-"+" v:-"));
     }
@@ -766,8 +778,8 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
 
     if (typeof tonnageFormData != 'undefined') {
         var tonnageInput = tonnageFormData
-    } else if (typeof exercise.tonnageInput != 'undefined') {
-          var tonnageInput = exercise.tonnageInput;
+    } else if (typeof exerciseDb.tonnageInput != 'undefined') {
+          var tonnageInput = exerciseDb.tonnageInput;
     } else {
           var tonnageInput = [[0,0,0,0],
                     [0,0,0,0], [0,0,0,0],
@@ -815,40 +827,6 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
         if (equivalentCandidate[i] > equivalentMax) {equivalentMax = equivalentCandidate[i]};
         //console.log("row["+i+"] eqMax "+equivalentCandidate+" tonn: "+tonnageOutput[i]);
     }
-    //console.log("overall eqMax: "+equivalentMax);
-
-    // // Tonnage header row
-    // var li = document.createElement('li');
-    // var a = document.createElement('a');
-    // a.className = "table-right";
-    // a.appendChild(document.createTextNode("Vol"));
-    // li.appendChild(a);
-
-    // var a = document.createElement('a');
-    // a.className = "table-right";
-    // a.appendChild(document.createTextNode("Max"));
-    // li.appendChild(a);
-
-    // var a = document.createElement('a');
-    // a.className = "table-left";
-    // a.appendChild(document.createTextNode("Sets"));
-    // li.appendChild(a);
-    
-    //  var a = document.createElement('a');
-    // a.className = "table-left";
-    // a.appendChild(document.createTextNode("Reps"));
-    // li.appendChild(a);
-
-    // var a = document.createElement('a');
-    // a.className = "table-left";
-    // a.appendChild(document.createTextNode("RPE"));
-    // li.appendChild(a);
-
-    // li.appendChild(a);   var a = document.createElement('a');
-    // a.className = "table-middle";
-    // a.appendChild(document.createTextNode("Load"));
-    // li.appendChild(a);
-    // form.appendChild(li);
 
     // rows in tonnage matrix
     for (i=0; i<tonnageInput.length; i++) {
@@ -1023,73 +1001,54 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     window.scrollTo(0, 0);
    
     // populate the graphs
-    if ((typeof exercise.tonnageHistory != 'undefined') && (typeof exercise.maxHistory != 'undefined')) {
-        printVerticalStripChart('Tonnage', exercise.tonnageHistory, equivalentMax, overallTonnage, true);
-        printVerticalStripChart('Max', exercise.maxHistory, equivalentMax, overallTonnage, true);
+    if ((exerciseDb?.tonnageHistory.length>0) && (exerciseDb.maxHistory?.length>0)) {
+        printVerticalStripChart('Tonnage', exerciseDb.tonnageHistory, equivalentMax, overallTonnage, true);
+        printVerticalStripChart('Max', exerciseDb.maxHistory, equivalentMax, overallTonnage, true);
     }
 }
 function updateTonnage (dayNum, exerNum, rpeInput, tonnageInput, equivalentMax, overallTonnage) {
     //console.log("update weights" + dayNum + " " + exerNum);
-    dayNum = dayNum % workoutData.days.length;
+    dayNum = dayNum % selectedWorkoutData.days.length;
     var logDate = new Date();
     //logDate.setDate(logDate.getDate()-1);
     //console.log("logging: date:"+logDate.toISOString()+" eqMax:"+equivalentMax+" tonnage:"+overallTonnage);
     //console.log(tonnageInput);
+    var exercise = selectedWorkoutData.days[dayNum].exercises[exerNum]
+    var exerciseDb = workoutData.exerciseDb[exercise.exerciseKey]
 
-    workoutData.days[dayNum].exercises[exerNum].rpeInput = rpeInput;
-    workoutData.days[dayNum].exercises[exerNum].tonnageInput = tonnageInput;
+    exerciseDb.rpeInput = rpeInput;
+    exerciseDb.tonnageInput = tonnageInput;
 
-    if ((typeof workoutData.days[dayNum].exercises[exerNum].tonnageHistory != 'undefined') && 
-        (typeof workoutData.days[dayNum].exercises[exerNum].maxHistory != 'undefined')) {
-        var lastIndex = workoutData.days[dayNum].exercises[exerNum].tonnageHistory.length - 1;
-        var lastDate = new Date(workoutData.days[dayNum].exercises[exerNum].tonnageHistory[lastIndex].date);
+    if ((typeof exerciseDb.tonnageHistory != 'undefined') && 
+        (typeof exerciseDb.maxHistory != 'undefined')) {
+        var lastIndex = exerciseDb.tonnageHistory.length - 1;
+        var lastDate = new Date(exerciseDb.tonnageHistory[lastIndex].date);
         // if the last log entry was more than an hour ago log a new entry otherwise replace it
         //console.log("last", lastDate, "log", logDate, "diff", (logDate - lastDate));
         if ((logDate - lastDate) > 60*60*1000) { // 60min * 60sec/min * 1000msec/sec
-            workoutData.days[dayNum].exercises[exerNum].tonnageHistory.push({date:logDate.toISOString(), overallTonnage:overallTonnage});
-            workoutData.days[dayNum].exercises[exerNum].maxHistory.push({date:logDate.toISOString(), equivalentMax:equivalentMax})
+            exerciseDb.tonnageHistory.push({date:logDate.toISOString(), overallTonnage:overallTonnage});
+            exerciseDb.maxHistory.push({date:logDate.toISOString(), equivalentMax:equivalentMax})
         }
         else {
-            workoutData.days[dayNum].exercises[exerNum].tonnageHistory[lastIndex] = {date:logDate.toISOString(), overallTonnage:overallTonnage};
-            workoutData.days[dayNum].exercises[exerNum].maxHistory[lastIndex]= {date:logDate.toISOString(), equivalentMax:equivalentMax}
+            exerciseDb.tonnageHistory[lastIndex] = {date:logDate.toISOString(), overallTonnage:overallTonnage};
+            exerciseDb.maxHistory[lastIndex]= {date:logDate.toISOString(), equivalentMax:equivalentMax}
         }
         
     } else {
-        workoutData.days[dayNum].exercises[exerNum].tonnageHistory = [{date:logDate.toISOString(), overallTonnage:overallTonnage}];
-        workoutData.days[dayNum].exercises[exerNum].maxHistory = [{date:logDate.toISOString(), equivalentMax:equivalentMax}];
+        exerciseDb.tonnageHistory = [{date:logDate.toISOString(), overallTonnage:overallTonnage}];
+        exerciseDb.maxHistory = [{date:logDate.toISOString(), equivalentMax:equivalentMax}];
     }
     updateStoredData('workoutData', workoutData);
 }
 
 function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) {
 
-    var dayData = workoutData.days[dayNum%(workoutData.days.length)];
+    var dayData = selectedWorkoutData.days[dayNum%(selectedWorkoutData.days.length)];
     //console.log(dayData)
     var exercise = dayData.exercises[exerNum];
+    var exerciseDb = workoutData.exerciseDb[exercise.exerciseKey]
 
-    // form.addEventListener("change",function (e) 
-    //     {
-    //     //console.log("Form has changed",e,form);
-    //     var sendTonnageFormData = [[0,0,0,0],
-    //                 [0,0,0,0], [0,0,0,0],
-    //                 [0,0,0,0]]; ;
-    //     for (i=0; i<sendTonnageFormData.length; i++) {
-    //         for (j=0; j<sendTonnageFormData[i].length; j++) {
-    //             sendTonnageFormData[i][j] = document.getElementById("updateTonnage").elements["tonnageInput["+i+"]["+j+"]"].value;
-    //         }
-    //     }
-    //     var sendRpeFormData = [[0,10,0],
-    //                 [0,10,0]]; ;
-    //     for (i=0; i<sendRpeFormData.length; i++) {
-    //         for (j=0; j<sendRpeFormData[i].length; j++) {
-    //             sendRpeFormData[i][j] = form.elements["rpeInput["+i+"]["+j+"]"].value;
-    //         }
-    //     }
-    //     displayTonnageOptions(dayNum, exerNum, sendTonnageFormData, sendRpeFormData);
-    //     }
-    // );
-
-    // dayNum
+     // dayNum
     var dayNumInput = document.createElement('input');
     dayNumInput.value = dayNum;
     dayNumInput.type = "hidden";
@@ -1106,7 +1065,7 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
     if (typeof rpeFormData != 'undefined') {
         var rpeInput = rpeFormData
     } else if (typeof exercise.rpeInput != 'undefined') {
-          var rpeInput = exercise.rpeInput;
+          var rpeInput = exerciseDb.rpeInput;
     } else {
           var rpeInput = [[0,10,0],
                     [0,10,0]];
@@ -1245,15 +1204,15 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
 
 // function promptForBodyWeight(dayNum, exerNum, tonnageFormData) {
 //     var promptDefault = "";
-//     if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight != 'undefined') {
-//         promptDefault = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight;
+//     if (typeof selectedWorkoutData.days[dayNum % selectedWorkoutData.days.length].exercises[exerNum].bodyWeight != 'undefined') {
+//         promptDefault = selectedWorkoutData.days[dayNum % selectedWorkoutData.days.length].exercises[exerNum].bodyWeight;
 //     }
 //     var bodyWeight = prompt("Enter your body weight if it is to be used in the calculation:", promptDefault);
 //     if (bodyWeight != null && bodyWeight != "" && !isNaN(parseInt(bodyWeight))) {
-//         workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight = parseInt(bodyWeight);
+//         selectedWorkoutData.days[dayNum % selectedWorkoutData.days.length].exercises[exerNum].bodyWeight = parseInt(bodyWeight);
 //         updateStoredData('workoutData', workoutData);
 //     }
-//     //console.log("BW: "+workoutData.days[dayNum % workoutData.days.length].exercises[exerNum].bodyWeight);
+//     //console.log("BW: "+selectedWorkoutData.days[dayNum % selectedWorkoutData.days.length].exercises[exerNum].bodyWeight);
 //     displayTonnageOptions(dayNum, exerNum, tonnageFormData);
 // }
 
@@ -1267,9 +1226,10 @@ function promptForDaysToClear(dayNum, exerNum) {
 }
 
 function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
-    if (typeof workoutData.days[dayNum % workoutData.days.length].exercises[exerNum]) {
-        var exercise = workoutData.days[dayNum % workoutData.days.length].exercises[exerNum];
-        
+    if (typeof selectedWorkoutData.days[dayNum % selectedWorkoutData.days.length].exercises[exerNum]) {
+        var exercise = selectedWorkoutData.days[dayNum % selectedWorkoutData.days.length].exercises[exerNum];
+        var exerciseDb = workoutData.exerciseDb[exercise.exerciseKey]
+
         var graph = document.createElement('div');
         graph.id = "options";
         graph.className = "optionpanel";
@@ -1307,9 +1267,9 @@ function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
         document.getElementById('main').style.display = 'none';
         window.scrollTo(0, 0);
 
-        if ((typeof exercise.tonnageHistory != 'undefined') && (typeof exercise.maxHistory != 'undefined')) {
-            printVerticalStripChart('Tonnage', exercise.tonnageHistory);
-            printVerticalStripChart('Max', exercise.maxHistory);
+        if ((exerciseDb.tonnageHistory?.length>0) && (exerciseDb.maxHistory?.length>0)) {
+            printVerticalStripChart('Tonnage', exerciseDb.tonnageHistory);
+            printVerticalStripChart('Max', exerciseDb.maxHistory);
         }
 
         var buttonContainer = document.createElement('p');
@@ -1359,10 +1319,18 @@ function showWorkoutOptions(dayNum) {
     // Action Buttons
     var buttonContainer = document.createElement('p');
 
+    // Select new workout
+    var info = document.createElement('a');
+    info.className = "black button";
+    info.href = "javascript:selectWorkout();";
+    info.appendChild(document.createTextNode("Select Workout"));
+    buttonContainer.appendChild(info);
+    workoutOptions.appendChild(buttonContainer);
+
     // Info
     var info = document.createElement('a');
     info.className = "black button";
-    info.href = "javascript:window.open('"+workoutData.url+"','_blank');closeOptions();";
+    info.href = "javascript:window.open('"+selectedWorkoutData.url+"','_blank');closeOptions();";
     info.target = "_blank";
     info.appendChild(document.createTextNode("Workout Info"));
     buttonContainer.appendChild(info);
@@ -1660,13 +1628,20 @@ const rpe_chart = {
     }    
 }
 
+// Functions for converting combining new workouts into the dataset.  Add the new workout to localStorage then add it by
+// running convertWorkoutData from the console.  Then examine the exerciseDb to see if anything needs to be combined.
+// Run combineExerciseData with the first key the key to keep and the second the key to merge into the first
 
 function convertWorkoutData(data) {
+    // get new workout data to incorporate into updated
     var original = JSON.parse(localStorage.getItem(data))
-    localStorage.setItem('originalWorkoutData', JSON.stringify(original))
 
     var workoutKey = original.workoutName.replace(/\s/g, "")
-    var updated = JSON.parse(localStorage.getItem('updatedWorkouts'))
+    var updated = JSON.parse(localStorage.getItem('workoutData'))
+
+    // save off previous workoutData
+    localStorage.setItem('originalWorkoutData', JSON.stringify(updated))
+
     if (!updated.workouts) {
         updated = {workouts: {}, exerciseDb: {}}
     }
@@ -1707,7 +1682,7 @@ function convertWorkoutData(data) {
         }
     }
     console.log(updated)
-    localStorage.setItem('updatedWorkouts', JSON.stringify(updated))
+    localStorage.setItem('workoutData', JSON.stringify(updated))
 }
 
 function getExerciseKey(key, dict) {
@@ -1745,10 +1720,28 @@ function combineAndSortArrays(arr1, arr2) {
 }
 
 function combineExerciseData(first, second) {
-    var updatedWorkouts = JSON.parse(localStorage.getItem('updatedWorkouts'))
+    var updatedWorkouts = JSON.parse(localStorage.getItem('workoutData'))
     updatedWorkouts.exerciseDb[first].maxHistory = combineAndSortArrays(updatedWorkouts.exerciseDb[first].maxHistory, updatedWorkouts.exerciseDb[second].maxHistory)
     updatedWorkouts.exerciseDb[first].tonnageHistory = combineAndSortArrays(updatedWorkouts.exerciseDb[first].tonnageHistory, updatedWorkouts.exerciseDb[second].tonnageHistory)
     delete updatedWorkouts.exerciseDb[second]
-    localStorage.setItem('updatedWorkouts', JSON.stringify(updatedWorkouts))
+    localStorage.setItem('workoutData', JSON.stringify(updatedWorkouts))
     console.log(updatedWorkouts)
+    fixAndFindOrphanKeys()
+}
+
+function fixAndFindOrphanKeys() {
+    var updatedWorkouts = JSON.parse(localStorage.getItem('workoutData'))
+    for (let workoutKey in updatedWorkouts.workouts) {
+        var workout = updatedWorkouts.workouts[workoutKey]
+        workout.days.forEach( day =>{
+            day.exercises.forEach(exercise => {
+                exercise.exerciseKey = exercise.exerciseKey.replace(/_\d/, '')
+                if (!updatedWorkouts.exerciseDb.hasOwnProperty(exercise.exerciseKey)) {
+                    console.log(`${workout.workoutName} has a bad key (${exercise.exerciseKey}) for day ${day.dayName} exercise ${exercise.exerciseName}`)
+                }
+            })
+        })
+    }
+    console.log(updatedWorkouts)
+    localStorage.setItem('workoutData', JSON.stringify(updatedWorkouts))
 }
