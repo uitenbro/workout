@@ -28,7 +28,6 @@ function readStoredData() {
         }
         readSyncFile(); // need to wait for updates localStorage and local data
     }
-    selectedWorkoutData = workoutData.workouts[workoutData.selectedWorkout]
 }
 
 function updateStoredData(item, value) {
@@ -66,6 +65,12 @@ function init () {
 }
 
 function printAll(){
+    if (workoutData.selectedWorkout) {
+        selectedWorkoutData = workoutData.workouts[workoutData.selectedWorkout]
+    }
+    else {
+        selectedWorkoutData = workoutData.workouts[0]
+    }
     printHeader();
     printMain();
 }
@@ -255,6 +260,7 @@ function completeDay(dayNum) {
     updateStoredData('workoutData', workoutData)
     printHeader(dayNum+1);
     printMain(dayNum+1);
+    window.scrollTo(0, 0);
 }
 function resetToday() {
     //console.log("Reset");
@@ -283,23 +289,27 @@ function browsePrevious(dayNum) {
     if (dayNum>0) {
         printHeader(dayNum-1);
         printMain(dayNum-1);
+        window.scrollTo(0, 0);
     }
     else {
         dayNum=selectedWorkoutData.days.length-1;
         printHeader(dayNum);
         printMain(dayNum);
+        window.scrollTo(0, 0);
     }
 }
 function browseNext(dayNum) {
     //console.log("Next");
     printHeader(dayNum+1);
     printMain(dayNum+1);
+    window.scrollTo(0, 0);
 }
 function displayDay(dayNum) {
     //console.log("Next");
     printHeader(dayNum);
     printMain(dayNum);
     closeOptions();
+    window.scrollTo(0, 0);
 }
 
 function clearExerciseHistory(dayNum, exerNum, daysToSave, saveImmediately = true) {
@@ -646,7 +656,7 @@ function updateWeights (dayNum, exerNum) {
             selectedWorkoutData.days[dayNum].exercises[exerNum].sets[i].weight = document.forms['updateWeight']['weight['+i+']'].value;
             selectedWorkoutData.days[dayNum].exercises[exerNum].sets[i].label = document.forms['updateWeight']['label['+i+']'].value;
         } else if (document.forms['updateWeight']['weight['+i+']'].value!="" || document.forms['updateWeight']['label['+i+']'].value!="") {
-            selectedWorkoutData.days[dayNum].exercises[exerNum].sets.push({"Load":document.forms['updateWeight']['weight['+i+']'].value,"label":document.forms['updateWeight']['label['+i+']'].value})
+            selectedWorkoutData.days[dayNum].exercises[exerNum].sets.push({"weight":document.forms['updateWeight']['weight['+i+']'].value,"label":document.forms['updateWeight']['label['+i+']'].value})
         }
     }
     // TODO: Add field to the form to change the execiseKey then add it to the database here 
