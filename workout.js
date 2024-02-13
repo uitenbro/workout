@@ -321,7 +321,7 @@ function clearExerciseHistory(dayNum, exerNum, daysToSave, saveImmediately = tru
     //console.log("daysToSave:", daysToSave)
     console.log("thresholdDate:", (thresholdDate))
 
-    if (typeof exerciseDb.tonnageHistory != 'undefined') {
+    if (exerciseDb.tonnageHistory?.length>0) {
         var testDate = new Date(exerciseDb.tonnageHistory[0].date)
         while (testDate < thresholdDate) {
             console.log("tonnDate:", exerciseDb.tonnageHistory[0].date, "cleared")
@@ -336,7 +336,7 @@ function clearExerciseHistory(dayNum, exerNum, daysToSave, saveImmediately = tru
         }
     }
 
-    if (typeof exerciseDb.maxHistory != 'undefined') {
+    if (exerciseDb.maxHistory?.length>0) {
         var testDate = new Date(exerciseDb.maxHistory[0].date)
         while (testDate < thresholdDate) {
             console.log("maxDate:", (exerciseDb.maxHistory[0].date), " cleared")
@@ -1029,8 +1029,8 @@ function updateTonnage (dayNum, exerNum, rpeInput, tonnageInput, equivalentMax, 
     exerciseDb.rpeInput = rpeInput;
     exerciseDb.tonnageInput = tonnageInput;
 
-    if ((typeof exerciseDb.tonnageHistory != 'undefined') && 
-        (typeof exerciseDb.maxHistory != 'undefined')) {
+    if ((exerciseDb.tonnageHistory?.length>0) && 
+        (exerciseDb.maxHistory?.length>0)) {
         var lastIndex = exerciseDb.tonnageHistory.length - 1;
         var lastDate = new Date(exerciseDb.tonnageHistory[lastIndex].date);
         // if the last log entry was more than an hour ago log a new entry otherwise replace it
