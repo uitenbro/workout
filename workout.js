@@ -845,40 +845,119 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
         var rpe = parseInt(tonnageInput[i][2]);
         var weight = parseInt(tonnageInput[i][3]);
 
-        var li = document.createElement('li')
-        var a = document.createElement('a');
-        a.className = "table-right";
-        if (equivalentCandidate[i] > 0 && reps*sets > 0) {
-            var percentOfMax = Math.round(100 * weight / equivalentCandidate[i], 2);
-        } else {
-            var percentOfMax = 0;
-        }
+        // use fourth row for percent calculator
+        if (i<3) {
 
-        // a.appendChild(document.createTextNode(tonnageOutput[i])); // +" lbs"));
-        // a.id = "tonnageOutput["+i+"]";
-        // li.appendChild(a);
-
-        a.appendChild(document.createTextNode(equivalentCandidate[i])); // +" lbs"));
-        a.id = "tonnageOutput["+i+"]";
-        li.appendChild(a);
-
-        var a = document.createElement('a');
-        a.appendChild(document.createTextNode(percentOfMax));
-        a.id = "percentMax["+i+"]";
-        a.className = "table-right";
-        li.appendChild(a);
-
-        for (j=0; j<tonnageInput[i].length; j++) {
+            var li = document.createElement('li')
             var a = document.createElement('a');
-            if (j==3) {a.className = "table-middle";} else {a.className = "table-left";};
-            var tonnageInputField = document.createElement('input');
-            tonnageInputField.type = "number";
-            tonnageInputField.style.textAlign = "right";
-            tonnageInputField.name = "tonnageInput["+i+"]["+j+"]";
-            tonnageInputField.value = tonnageInput[i][j];
-            tonnageInputField.addEventListener("focus", function() { this.select(); });
-            a.appendChild(tonnageInputField);
+            a.className = "table-right";
+            if (equivalentCandidate[i] > 0 && reps*sets > 0) {
+                var percentOfMax = Math.round(100 * weight / equivalentCandidate[i], 2);
+            } else {
+                var percentOfMax = 0;
+            }
+
+            // a.appendChild(document.createTextNode(tonnageOutput[i])); // +" lbs"));
+            // a.id = "tonnageOutput["+i+"]";
+            // li.appendChild(a);
+
+            a.appendChild(document.createTextNode(equivalentCandidate[i])); // +" lbs"));
+            a.id = "tonnageOutput["+i+"]";
+            li.appendChild(a);
+
+            var a = document.createElement('a');
+            a.appendChild(document.createTextNode(percentOfMax));
+            a.id = "percentMax["+i+"]";
+            a.className = "table-right";
+            li.appendChild(a);
+
+            for (j=0; j<tonnageInput[i].length; j++) {
+                var a = document.createElement('a');
+                if (j==3) {a.className = "table-middle";} else {a.className = "table-left";};
+                var tonnageInputField = document.createElement('input');
+                tonnageInputField.type = "number";
+                tonnageInputField.style.textAlign = "right";
+                tonnageInputField.name = "tonnageInput["+i+"]["+j+"]";
+                tonnageInputField.value = tonnageInput[i][j];
+                tonnageInputField.addEventListener("focus", function() { this.select(); });
+                a.appendChild(tonnageInputField);
+                li.appendChild(a)
+            }
+        }
+        else {
+
+
+            // add hidden form data 
+            var pctInputField = document.createElement('input');
+            pctInputField.type = "hidden";
+            pctInputField.name = "tonnageInput["+i+"][0]";
+            pctInputField.value = 0;
+            form.appendChild(pctInputField)
+            var pctInputField = document.createElement('input');
+            pctInputField.type = "hidden";
+            pctInputField.name = "tonnageInput["+i+"][2]";
+            pctInputField.value = 0;
+            form.appendChild(pctInputField)
+
+            var pctIncrease = reps
+            var lastLoad = weight
+
+            var li = document.createElement('li')
+            form.appendChild(li) // empty li as separator
+
+            var li = document.createElement('li')
+            a = document.createElement('a');
+            a.className = "table-right";
+            a.appendChild(document.createTextNode((lastLoad*(1+pctIncrease/100)).toFixed(0)));
+            li.appendChild(a);
+         
+            var a = document.createElement('a');
+            a.className = "table-right";
+            a.appendChild(document.createTextNode("next"));
+            li.appendChild(a);
+
+            var a = document.createElement('a');
+            a.className = "table-left";
+            var pctInputField = document.createElement('input');
+            pctInputField.type = "number";
+            pctInputField.style.textAlign = "right";
+            pctInputField.name = "tonnageInput["+i+"][1]";
+            pctInputField.value = pctIncrease;
+            pctInputField.addEventListener("focus", function() { this.select(); });
+            a.appendChild(pctInputField);
             li.appendChild(a)
+            
+            var a = document.createElement('a');
+            a.className = "table-left";
+            a.appendChild(document.createTextNode("% +"));
+            li.appendChild(a)
+
+            var a = document.createElement('a');
+            a.className = "table-left";
+            a.appendChild(document.createTextNode("last"));
+            li.appendChild(a)
+
+            var a = document.createElement('a');
+            a.className = "table-middle";
+            var pctInputField = document.createElement('input');
+            pctInputField.type = "number";
+            pctInputField.style.textAlign = "right";
+            pctInputField.name = "tonnageInput["+i+"][3]";
+            pctInputField.value = lastLoad
+            pctInputField.addEventListener("focus", function() { this.select(); });
+            a.appendChild(pctInputField);
+            li.appendChild(a)
+
+            // var a = document.createElement('a');
+            // a.className = "table-left";
+            // a.appendChild(document.createTextNode("%"));
+            // li.appendChild(a)
+
+            // var a = document.createElement('a');
+            // a.className = "table-middle";
+            // a.appendChild(document.createTextNode("next"));
+            // li.appendChild(a);
+
         }
 
         form.appendChild(li)
@@ -985,7 +1064,7 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
     // Clear History
     var clear = document.createElement('a');
     clear.className = "black button";
-    clear.href = "javascript:promptForDaysToClear("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+")";
+    clear.href = "javascript:promptForDaysToClear("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageInput))+");javascript:displayTonnageOptions("+dayNum+","+exerNum+","+encodeURIComponent(JSON.stringify(tonnageFormData))+");";
     clear.appendChild(document.createTextNode("Clear History"));
     buttonContainer.appendChild(clear);
 
