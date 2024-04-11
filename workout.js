@@ -519,8 +519,8 @@ function selectWorkout() {
 function updateSelectedWorkout(selectedWorkoutKey) {
     workoutData.selectedWorkout = selectedWorkoutKey;
     updateStoredData('workoutData', workoutData);
+    printAll();
     closeOptions();
-    init();
 }
 
 function displayWeightOptions(dayNum, exerNum) {
