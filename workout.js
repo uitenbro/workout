@@ -1153,7 +1153,7 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
 
     if (typeof rpeFormData != 'undefined') {
         var rpeInput = rpeFormData
-    } else if (typeof exercise.rpeInput != 'undefined') {
+    } else if (typeof exerciseDb.rpeInput != 'undefined') {
           var rpeInput = exerciseDb.rpeInput;
     } else {
           var rpeInput = [[0,10,0],
