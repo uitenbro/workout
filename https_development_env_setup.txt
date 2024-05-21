@@ -18,7 +18,7 @@ python3 devHttpsServer.py
 https://localhost:8000
 
 # Click Advanced and proceed anyway
-# System Preferences::Network::Advanced::Proxies  
+# System Preferences::Network::(select WiFi)::Details::Proxies  
 # Bypass proxy settings for these Hosts & Domains: added localhost
 # Pressed Ok then Apply button on System Preferences::Network pane
 # Note: took a long time to connect and failed to respond initially
