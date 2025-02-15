@@ -182,8 +182,12 @@ function printWorkoutInfo(dayNum) {
     var dayNumber = document.createElement('a');
     dayNumber.className = "right";
     dayNumber.href = "javascript:showWorkoutOptions("+dayNum+");"
-    var printDay = Math.floor(dayNum/selectedWorkoutData.days.length)+1;
-    dayNumber.appendChild(document.createTextNode("Week " + printDay))
+    var printWeek = Math.floor(dayNum/selectedWorkoutData.days.length)+1;
+    // if workoutDaysPerWeek is defined use that to determine week number
+    if (typeof(selectedWorkoutData.workoutDaysPerWeek) !== 'undefined') {
+        printWeek = Math.floor(dayNum/selectedWorkoutData.workoutDaysPerWeek)+1;
+    }
+    dayNumber.appendChild(document.createTextNode("Week " + printWeek))
     //dayNumber.appendChild(document.createTextNode(""))
     workoutLi.appendChild(dayNumber);
 
