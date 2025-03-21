@@ -10,6 +10,9 @@ mv localhost.pem localhost-key.pem path/to/certs/  # no movement needed for loca
 
 # Configure Local Non-Secure Server (Example for Python http.server)
 python3 -m http.server 8000 --bind 127.0.0.1 --cgi 
+https://localhost:8000
+
+##### OR ######
 
 # Configure Local Secure Server (Example for Python http.server)
 python3 devHttpsServer.py
