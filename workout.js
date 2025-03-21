@@ -187,7 +187,7 @@ function printWorkoutInfo(dayNum) {
     if (typeof(selectedWorkoutData.workoutDaysPerWeek) !== 'undefined') {
         printWeek = Math.floor(dayNum/selectedWorkoutData.workoutDaysPerWeek)+1;
     }
-    dayNumber.appendChild(document.createTextNode("Week " + printWeek))
+    dayNumber.appendChild(document.createTextNode(" Week " + printWeek))
     //dayNumber.appendChild(document.createTextNode(""))
     workoutLi.appendChild(dayNumber);
 
@@ -215,12 +215,20 @@ function printExercise(dayNum, exerNum) {
     var a = document.createElement('a');
     a.className = "right";
     a.href = "javascript:displayTonnageOptions("+dayNum+","+exerNum+")";
-    if (exerciseDb.tonnageHistory?.length>0) {
-        a.appendChild(document.createTextNode("m:"+ parseInt(exerciseDb.maxHistory[exerciseDb.maxHistory.length-1].equivalentMax) +
-            " v:"+exerciseDb.tonnageHistory[exerciseDb.tonnageHistory.length-1].overallTonnage));
+    // if (exerciseDb.tonnageHistory?.length>0) {
+    //     a.appendChild(document.createTextNode("m:"+ parseInt(exerciseDb.maxHistory[exerciseDb.maxHistory.length-1].equivalentMax) +
+    //         " v:"+exerciseDb.tonnageHistory[exerciseDb.tonnageHistory.length-1].overallTonnage));
+    // } else {
+    //     a.appendChild(document.createTextNode("m:- v:-"));
+    // }
+
+    if (exerciseDb.tonnageInput?.length>0) {
+        a.appendChild(document.createTextNode(getWorkingSetsRepsRpeWeight(exerciseDb)));
     } else {
-        a.appendChild(document.createTextNode("m:- v:-"));
+        a.appendChild(document.createTextNode("work set"));
     }
+
+    
     li.appendChild(a);
 
     var a = document.createElement('a');
@@ -547,7 +555,12 @@ function displayWeightOptions(dayNum, exerNum) {
 
     var h2 = document.createElement('h2');
     h2.appendChild(cancel);
-    h2.appendChild(document.createTextNode(dayData.dayName));
+    var printWeek = Math.floor(dayNum/selectedWorkoutData.days.length)+1;
+    // if workoutDaysPerWeek is defined use that to determine week number
+    if (typeof(selectedWorkoutData.workoutDaysPerWeek) !== 'undefined') {
+        printWeek = Math.floor(dayNum/selectedWorkoutData.workoutDaysPerWeek)+1;
+    }
+    h2.appendChild(document.createTextNode(dayData.dayName + " Week " + + printWeek));
     weightUpdate.appendChild(h2);
 
     var ul = document.createElement('ul');
@@ -696,7 +709,12 @@ function displayTonnageOptions(dayNum, exerNum, tonnageFormData, rpeFormData) {
 
     var h2 = document.createElement('h2');
     h2.appendChild(cancel);
-    h2.appendChild(document.createTextNode(dayData.dayName));
+    var printWeek = Math.floor(dayNum/selectedWorkoutData.days.length)+1;
+    // if workoutDaysPerWeek is defined use that to determine week number
+    if (typeof(selectedWorkoutData.workoutDaysPerWeek) !== 'undefined') {
+        printWeek = Math.floor(dayNum/selectedWorkoutData.workoutDaysPerWeek)+1;
+    }
+    h2.appendChild(document.createTextNode(dayData.dayName + " Week " + printWeek));
     tonnageUpdate.appendChild(h2);
 
     var ul = document.createElement('ul');
@@ -1132,6 +1150,37 @@ function updateTonnage (dayNum, exerNum, rpeInput, tonnageInput, equivalentMax, 
         exerciseDb.maxHistory = [{date:logDate.toISOString(), equivalentMax:equivalentMax}];
     }
     updateStoredData('workoutData', workoutData);
+}
+
+function getWorkingSetsRepsRpeWeight(exerciseDb) {
+    return_string = "work set";
+    tonnageInput = exerciseDb.tonnageInput
+    // rows in tonnage matrix
+    for (i=0; i<tonnageInput.length; i++) {
+        
+        best_sets = {sets:0,reps:0, rpe:0, weight:0}
+
+        // use fourth row for percent calculator
+        if (i<3) {        
+            var sets = parseInt(tonnageInput[i][0]);
+            var reps = parseInt(tonnageInput[i][1]);
+            var rpe = parseInt(tonnageInput[i][2]);
+            var weight = parseInt(tonnageInput[i][3]);
+            if (sets*reps>0) {
+                // heaviest sets are working sets
+                if (weight > best_sets.weight) {
+                    best_sets.sets = sets;
+                    best_sets.reps = reps;
+                    best_sets.rpe = rpe;
+                    best_sets.weight = weight;
+                }
+            }
+        }
+        if (best_sets.sets*best_sets.reps > 0) {
+            return_string = best_sets.sets + "x" + best_sets.reps + " (" + best_sets.rpe + ") " + best_sets.weight; 
+        }
+    }
+    return return_string;
 }
 
 function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) {
