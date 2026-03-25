@@ -1214,12 +1214,17 @@ function createRpeCalcForm(form, dayNum, exerNum, tonnageFormData, rpeFormData) 
     }
 
     // calculate max and rpe loading
-    var rpeReps = parseInt(rpeInput[0][0]);
-    var rpeWeight = parseInt(rpeInput[0][2]);
-    var rpeRpe = parseInt(rpeInput[0][1]);
-    var tgtReps = parseInt(rpeInput[1][0]);
-    var tgtWeight = parseInt(rpeInput[1][2]);
-    var tgtRpe = parseInt(rpeInput[1][1]);       
+    var rpeReps = parseInt(rpeInput?.[0]?.[0]) || 0;
+    var rpeWeight = parseInt(rpeInput?.[0]?.[2]) || 0;
+    var rpeRpe = parseInt(rpeInput?.[0]?.[1]) || 7;
+    var tgtReps = parseInt(rpeInput?.[1]?.[0]) || 0;
+    var tgtWeight = parseInt(rpeInput?.[1]?.[2]) || 0;
+    var tgtRpe = parseInt(rpeInput?.[1]?.[1]) || 7;       
+
+    // Initialize rpeInput array structure if not already set up
+    if (!Array.isArray(rpeInput) || !Array.isArray(rpeInput[0]) || !Array.isArray(rpeInput[1])) {
+        rpeInput = [[rpeReps, rpeRpe, rpeWeight], [tgtReps, tgtRpe, tgtWeight]];
+    }
 
     // RPE boundary enforcement
     rpeReps<1 ? rpeReps=1 : rpeReps = rpeReps
