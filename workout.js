@@ -598,6 +598,28 @@ function displayWeightOptions(dayNum, exerNum) {
     a.appendChild(nameInput);
     li.appendChild(a);
     form.appendChild(li);
+
+    // Exercise Key Data
+    var keyLi = document.createElement('li');
+    var keyA = document.createElement('a');
+    var keyInput = document.createElement('input');
+    keyInput.style.color = "black";
+    keyInput.type = "text";
+    keyInput.name = "exerciseKey["+exerNum+"]";
+    keyInput.value = dayData.exercises[exerNum].exerciseKey;
+    keyInput.setAttribute("list", "exerciseKeysList");
+    keyA.appendChild(keyInput);
+
+    var datalist = document.createElement('datalist');
+    datalist.id = "exerciseKeysList";
+    for (var key in workoutData.exerciseDb) {
+        var option = document.createElement('option');
+        option.value = key;
+        datalist.appendChild(option);
+    }
+    keyA.appendChild(datalist);
+    keyLi.appendChild(keyA);
+    form.appendChild(keyLi);
     
     //print each row and one extra for defining new sets
     for (j=0; j<dayData.exercises[exerNum].sets.length+1; j++) {
@@ -664,6 +686,27 @@ function displayWeightOptions(dayNum, exerNum) {
 function updateWeights (dayNum, exerNum) {
     //console.log("update weights" + dayNum + " " + exerNum);
     dayNum = dayNum % selectedWorkoutData.days.length;
+
+    var newKey = document.forms['updateWeight']['exerciseKey['+exerNum+']'].value;
+    var currentKey = selectedWorkoutData.days[dayNum].exercises[exerNum].exerciseKey;
+
+    if (newKey !== currentKey) {
+        if (!workoutData.exerciseDb.hasOwnProperty(newKey)) {
+            var confirmCreate = window.confirm("Create new exercise key '" + newKey + "'?");
+            if (!confirmCreate) {
+                return; // Abort save if the user doesn't want to create it
+            }
+            // Initialize new exercise key in DB
+            workoutData.exerciseDb[newKey] = {
+                "maxHistory": [],
+                "tonnageInput": [],
+                "tonnageHistory": [],
+                "rpeInput": []
+            };
+        }
+        selectedWorkoutData.days[dayNum].exercises[exerNum].exerciseKey = newKey;
+    }
+
     selectedWorkoutData.days[dayNum].exercises[exerNum].exerciseName = document.forms['updateWeight']['exerciseName['+exerNum+']'].value
     var setsLengthPlusOne = selectedWorkoutData.days[dayNum].exercises[exerNum].sets.length+1
     // check each row and one additional row for new set definition
@@ -676,7 +719,7 @@ function updateWeights (dayNum, exerNum) {
             selectedWorkoutData.days[dayNum].exercises[exerNum].sets.push({"weight":document.forms['updateWeight']['weight['+i+']'].value,"label":document.forms['updateWeight']['label['+i+']'].value})
         }
     }
-    // TODO: Add field to the form to change the execiseKey then add it to the database here 
+
     updateStoredData('workoutData', workoutData);
 }
 
