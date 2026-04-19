@@ -333,6 +333,12 @@ div#options h2 a {
 				-webkit-appearance: textarea;
 				}
 
+			ul li input[list] {
+				color: #000;
+				background-color: #fff;
+				opacity: 1;
+			}
+
 				ul li textarea {
 					height: 120px;
 					padding: 0;
