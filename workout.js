@@ -46,6 +46,9 @@ function updateStoredData(item, value) {
         backupStoredWorkoutData();
     }
     appStorage.set(item, JSON.stringify(value, null, 1));
+    if (item == localStorageName && !suppressSupabaseMirror) {
+        queueSupabaseWorkoutSave(value);
+    }
     if (item != 'googleData' && googleData != null) {
         updateSyncFile();
     }
@@ -115,6 +118,13 @@ function printHeader (dayNum) {
     firstButton.appendChild(document.createTextNode("Complete"));
     header.appendChild(firstButton);
 
+    var syncStatus = document.createElement('a');
+    syncStatus.id = "syncStatus";
+    syncStatus.className = "action";
+    syncStatus.href = "javascript:displaySyncDetails();";
+    syncStatus.appendChild(document.createTextNode("Sync"));
+    header.appendChild(syncStatus);
+
     var secondButton = document.createElement('a');
     secondButton.className = "action";
     secondButton.id = "secondButton";
@@ -139,6 +149,7 @@ function printHeader (dayNum) {
 
     // Update header with the new content
     document.getElementById('header').replaceWith(header);
+    updateSupabaseSyncStatus();
 }
 
 // setup swipe handler

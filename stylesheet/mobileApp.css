@@ -135,6 +135,11 @@ div#header #secondButton {
 	-webkit-border-image: url(../images/toolButton.png) 0 8 0 14;*/
 	}
 
+div#header #syncStatus {
+	left: auto;
+	right: 135px;
+	}
+
 div#header #thirdButton {
 	left: 5px;
 	right: auto;
