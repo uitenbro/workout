@@ -13,25 +13,39 @@ function validateJsonData(response) {
     return response.workouts
 }
 
+function backupStoredWorkoutData() {
+    var storedData = appStorage.get(localStorageName);
+    if (storedData) {
+        appStorage.set(localStorageName + '.backup', JSON.stringify({
+            savedAt: new Date().toISOString(),
+            data: JSON.parse(storedData)
+        }, null, 1));
+    }
+}
+
 function readStoredData() {
-    Object.assign(workoutData, JSON.parse(localStorage.getItem("workoutData")));
+    Object.assign(workoutData, JSON.parse(appStorage.get("workoutData")));
     if (typeof workoutData.selectedWorkout == 'undefined') {
         console.log("No selected workout.  Defaulting to first workout")
         workoutData.selectedWorkout = Object.keys(workoutData.workouts)[0];
         updateStoredData('workoutData', workoutData)
     } 
-    if (localStorage.getItem('googleData')) {
+    if (appStorage.get('googleData')) {
         //console.log('found stored googleData');
-        googleData = JSON.parse(localStorage.getItem("googleData"));
-        while((gapiInited == false) || (gisInited == false) || (GooglePickerInited == false)) {
-            setTimeout(readStoredData(), 100)
+        googleData = JSON.parse(appStorage.get("googleData"));
+        if ((gapiInited == false) || (gisInited == false) || (GooglePickerInited == false)) {
+            setTimeout(readStoredData, 100);
+            return;
         }
         readSyncFile(); // need to wait for updates localStorage and local data
     }
 }
 
 function updateStoredData(item, value) {
-    localStorage.setItem(item, JSON.stringify(value, null, 1));
+    if (item == localStorageName) {
+        backupStoredWorkoutData();
+    }
+    appStorage.set(item, JSON.stringify(value, null, 1));
     if (item != 'googleData' && googleData != null) {
         updateSyncFile();
     }
@@ -39,18 +53,22 @@ function updateStoredData(item, value) {
 
 function initializeStoredData () {
 
-  if (localStorage.getItem('workoutData')) {
+    if (appStorage.get('workoutData')) {
     //console.log('found stored workoutData');
   }
   else {
     //console.log('create default workoutData');
-    localStorage.setItem('workoutData', workoutJson);
+    appStorage.set('workoutData', workoutJson);
   }
 }
 
 function clearStoredData(dataItem) {
 
-  if (localStorage.removeItem(dataItem)) {
+    if (dataItem == localStorageName) {
+        backupStoredWorkoutData();
+    }
+
+    if (appStorage.remove(dataItem)) {
     //console.log('found stored workoutData');
   }
   // if (localStorage.removeItem('workoutDay')) {
@@ -59,6 +77,7 @@ function clearStoredData(dataItem) {
 }
 
 function init () {
+    initializeSupabaseStorage();
     initializeStoredData();
     readStoredData();
     printAll();
@@ -442,11 +461,14 @@ function updateLocalData (dayNum) {
 
     } catch(error) {
         alert(error); // annunciate error without changing anything
-        //displayLocalDataOptions(dayNum);
+        return;
     }
     // Ensure the new workout data was turned into an object and then update it
     if (newWorkoutData != undefined) {
         if (validateJsonData(newWorkoutData)) {
+            workoutData = newWorkoutData;
+            syncData = workoutData;
+            selectedWorkoutData = workoutData.workouts[workoutData.selectedWorkout];
             updateStoredData('workoutData', workoutData);
             displayDay(dayNum);
         }
@@ -1483,6 +1505,7 @@ function closeOptions() {
     document.getElementById('main').style.display = 'block';
     document.getElementById('options').style.display = 'none';
 }
+
 function showWorkoutOptions(dayNum) {
    
     // Workout Options
@@ -1557,6 +1580,12 @@ function showWorkoutOptions(dayNum) {
     google.appendChild(document.createTextNode("Google Drive"));
     buttonContainer.appendChild(google);
     workoutOptions.appendChild(buttonContainer);
+
+    var supabase = document.createElement('a');
+    supabase.className = "black button";
+    supabase.href = "javascript:displaySupabaseOptions();";
+    supabase.appendChild(document.createTextNode("Supabase"));
+    buttonContainer.appendChild(supabase);
 
     // Display Local Storage Export/Import
     var locData = document.createElement('a');
@@ -1824,13 +1853,13 @@ const rpe_chart = {
 
 function convertWorkoutData(data) {
     // get new workout data to incorporate into updated
-    var original = JSON.parse(localStorage.getItem(data))
+    var original = JSON.parse(appStorage.get(data))
 
     var workoutKey = original.workoutName.replace(/\s/g, "")
-    var updated = JSON.parse(localStorage.getItem('workoutData'))
+    var updated = JSON.parse(appStorage.get('workoutData'))
 
     // save off previous workoutData
-    localStorage.setItem('originalWorkoutData', JSON.stringify(updated))
+    appStorage.set('originalWorkoutData', JSON.stringify(updated))
 
     if (!updated.workouts) {
         updated = {workouts: {}, exerciseDb: {}}
@@ -1872,7 +1901,7 @@ function convertWorkoutData(data) {
         }
     }
     console.log(updated)
-    localStorage.setItem('workoutData', JSON.stringify(updated))
+    appStorage.set('workoutData', JSON.stringify(updated))
 }
 
 function getExerciseKey(key, dict) {
@@ -1910,17 +1939,17 @@ function combineAndSortArrays(arr1, arr2) {
 }
 
 function combineExerciseData(first, second) {
-    var updatedWorkouts = JSON.parse(localStorage.getItem('workoutData'))
+    var updatedWorkouts = JSON.parse(appStorage.get('workoutData'))
     updatedWorkouts.exerciseDb[first].maxHistory = combineAndSortArrays(updatedWorkouts.exerciseDb[first].maxHistory, updatedWorkouts.exerciseDb[second].maxHistory)
     updatedWorkouts.exerciseDb[first].tonnageHistory = combineAndSortArrays(updatedWorkouts.exerciseDb[first].tonnageHistory, updatedWorkouts.exerciseDb[second].tonnageHistory)
     delete updatedWorkouts.exerciseDb[second]
-    localStorage.setItem('workoutData', JSON.stringify(updatedWorkouts))
+    appStorage.set('workoutData', JSON.stringify(updatedWorkouts))
     console.log(updatedWorkouts)
     fixAndFindOrphanKeys()
 }
 
 function fixAndFindOrphanKeys() {
-    var updatedWorkouts = JSON.parse(localStorage.getItem('workoutData'))
+    var updatedWorkouts = JSON.parse(appStorage.get('workoutData'))
     for (let workoutKey in updatedWorkouts.workouts) {
         var workout = updatedWorkouts.workouts[workoutKey]
         workout.days.forEach( day =>{
@@ -1933,5 +1962,5 @@ function fixAndFindOrphanKeys() {
         })
     }
     console.log(updatedWorkouts)
-    localStorage.setItem('workoutData', JSON.stringify(updatedWorkouts))
+    appStorage.set('workoutData', JSON.stringify(updatedWorkouts))
 }
