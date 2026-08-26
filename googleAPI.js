@@ -66,7 +66,6 @@ function displayGoogleDriveOptions() {
     ul.appendChild(li);
 
     if (googleData.syncFile == null) {
-      //var appFolderName = "none";
       var syncFileName = "none";
       var readTime = "never";
       var writeTime = "never"
@@ -91,7 +90,7 @@ function displayGoogleDriveOptions() {
       a.target = "_blank";
       a.href = "https://drive.google.com/open?id="+googleData.syncFile.id;
     }
-    a.appendChild(document.createTextNode("Sync File"));
+    a.appendChild(document.createTextNode("Backup File"));
     li.appendChild(a);
     ul.appendChild(li);
 
@@ -123,30 +122,18 @@ function displayGoogleDriveOptions() {
     var buttonContainer = document.createElement('p');
   
 
-    if (googleData.syncFile != null) {
-      // Reset 
-      var disable = document.createElement('a');
-      disable.className = "black button";
-      //disable.href = "javascript:disableGoogleDrive()";
-      disable.href = "javascript:signOut();displayGoogleDriveOptions();";
-      disable.appendChild(document.createTextNode("Stop Sync"));
-      buttonContainer.appendChild(disable);
-    } else {
-      // Setup Sync
-      var sync = document.createElement('a');
-      sync.className = "black button";
-      //sync.href = "javascript:syncGoogleDrive()";
-      sync.href = "javascript:createSyncFile();";
-      sync.appendChild(document.createTextNode("Setup New Sync"));
-      buttonContainer.appendChild(sync);
-    }
+    var exportData = document.createElement('a');
+    exportData.className = "black button";
+    exportData.href = "javascript:exportWorkoutDataToGoogleDrive();";
+    exportData.appendChild(document.createTextNode("Export Current Data"));
+    buttonContainer.appendChild(exportData);
 
     // Picker
     var picker = document.createElement('a');
     picker.className = "black button";
     //picker.href = "javascript:pickerGoogleDrive()";
     picker.href = "javascript:createPicker();closeOptions()";
-    picker.appendChild(document.createTextNode("Import Sync File"));
+    picker.appendChild(document.createTextNode("Import Backup File"));
     buttonContainer.appendChild(picker);
 
     googleOptions.appendChild(buttonContainer);
@@ -206,7 +193,7 @@ function handleCreateSyncFile(response) {
     googleData.syncFile = response;
     setLastWriteTime();
     updateStoredData('googleData', googleData);
-    console.log("Google Drive Data initialized with Local Storage");
+    console.log("Workout data exported to Google Drive");
     displayGoogleDriveOptions();
   }
   else {
@@ -219,7 +206,7 @@ function handleCreateSyncFile(response) {
 function handleUpdateSyncFile(response, reason) {
   //console.log(response);
   if (response.error === undefined) {
-    console.log("Google Drive Data updated with Local Storage")
+    console.log("Workout data exported to Google Drive")
     setLastWriteTime();
     updateStoredData('googleData', googleData);
   }
@@ -362,6 +349,15 @@ function createSyncFile() {
     alert ("All data will be stored in a file called " + syncFileName + " on at the Google Drive root.  You can move/remane this file as needed and sync will still work.");
 }
 
+function exportWorkoutDataToGoogleDrive() {
+  googleSyncInProgress(true);
+  if (googleData.syncFile != null) {
+    writeToGoogleDrive(googleData.syncFile, 'PATCH', syncData, handleUpdateSyncFile);
+  } else {
+    createSyncFile();
+  }
+}
+
 function readSyncFile() {
   if (googleData.syncFile != null) {
       googleSyncInProgress(true);
@@ -387,19 +383,10 @@ function handleReadSyncFileMetadata(response) {
   }
 }
 
-function updateSyncFile() {
-  if (googleData.syncFile != null) {
-    googleSyncInProgress(true);;
-    writeToGoogleDrive(googleData.syncFile, 'PATCH', syncData, handleUpdateSyncFile);
-  } else {
-      console.log("Google synchronization is not setup.");
-  }
-}
-
 function resetLocalGoogleData() {
     googleData = null;
     clearStoredData('googleData');
-    alert("You can now delete the synch file on your Google Drive.  Setup New Sync to turn on synchronization again.")
+    alert("You can now delete the backup file on your Google Drive.  Export Current Data to create a new backup.")
     displayGoogleDriveOptions();
 }
 

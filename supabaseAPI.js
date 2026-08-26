@@ -5,6 +5,7 @@ var supabaseInitializationChecked = false;
 var supabaseOutboxDatabase = null;
 var supabaseOutboxReady = null;
 var supabaseSyncInProgress = false;
+var supabaseFlushRequested = false;
 var supabaseLastSyncError = null;
 var supabaseAuthEventsBound = false;
 var suppressSupabaseMirror = false;
@@ -31,14 +32,26 @@ function initializeSupabaseStorage() {
     supabaseClient.auth.onAuthStateChange(function (event, session) {
         supabaseSession = session;
         console.log("Supabase auth state:", event);
-        if (event == "SIGNED_IN") {
-            flushSupabaseOutbox();
+        if (session) {
+            flushSupabaseOutbox().then(function () {
+                return loadNormalizedMetricCache();
+            }).catch(function (error) {
+                console.error("Normalized metric load error:", error);
+            });
         }
     });
     if (!supabaseAuthEventsBound) {
         window.addEventListener('online', flushSupabaseOutbox);
         supabaseAuthEventsBound = true;
     }
+    supabaseClient.auth.getSession().then(function (result) {
+        if (result.data && result.data.session) {
+            supabaseSession = result.data.session;
+            loadNormalizedMetricCache().catch(function (error) {
+                console.error("Normalized metric load error:", error);
+            });
+        }
+    });
     return true;
 }
 
@@ -130,6 +143,11 @@ async function reconcileGoogleDriveWorkoutData(driveData) {
             return {data: driveData, source: "drive", mirror: false};
         }
 
+        console.groupCollapsed("Google Drive / Supabase data difference");
+        console.log("Google Drive data:", driveData);
+        console.log("Supabase data:", remoteData.data);
+        console.groupEnd();
+
         var choice = window.prompt(
             "Google Drive and Supabase contain different workout data. Type drive to use Google Drive, supabase to use Supabase, or cancel to leave both unchanged.",
             "drive"
@@ -195,9 +213,15 @@ function openSupabaseOutbox() {
         return supabaseOutboxReady;
     }
     supabaseOutboxReady = new Promise(function (resolve, reject) {
-        var request = indexedDB.open('workoutSupabase', 1);
+        var request = indexedDB.open('workoutSupabase', 2);
         request.onupgradeneeded = function () {
-            request.result.createObjectStore('outbox', {keyPath: 'id', autoIncrement: true});
+            var database = request.result;
+            if (!database.objectStoreNames.contains('outbox')) {
+                database.createObjectStore('outbox', {keyPath: 'id', autoIncrement: true});
+            }
+            if (!database.objectStoreNames.contains('normalizedCache')) {
+                database.createObjectStore('normalizedCache', {keyPath: 'key'});
+            }
         };
         request.onsuccess = function () {
             supabaseOutboxDatabase = request.result;
@@ -295,7 +319,12 @@ function queueSupabaseWorkoutSave(data) {
 }
 
 async function flushSupabaseOutbox() {
-    if (supabaseSyncInProgress || !supabaseClient || !navigator.onLine) {
+    if (supabaseSyncInProgress) {
+        supabaseFlushRequested = true;
+        updateSupabaseSyncStatus();
+        return;
+    }
+    if (!supabaseClient || !navigator.onLine) {
         updateSupabaseSyncStatus();
         return;
     }
@@ -338,7 +367,75 @@ async function flushSupabaseOutbox() {
             if (record.accountId != user.id) {
                 continue;
             }
-            await saveSupabaseWorkoutData(record.data, 1);
+            if (record.kind == 'normalized_metric') {
+                var metricResult = await supabaseClient.rpc('append_exercise_metric', {
+                    p_id: record.payload.id,
+                    p_exercise_id: record.payload.exercise_id,
+                    p_metric_date: record.payload.metric_date,
+                    p_recorded_at: record.payload.recorded_at,
+                    p_equivalent_max: record.payload.equivalent_max,
+                    p_tonnage: record.payload.tonnage,
+                    p_mutation_id: record.payload.mutation_id
+                });
+                if (metricResult.error) {
+                    throw metricResult.error;
+                }
+            }
+            else if (record.kind == 'normalized_exercise_state') {
+                var stateResult = await supabaseClient
+                    .from('exercise_state')
+                    .upsert(record.payload, {onConflict: 'exercise_id', ignoreDuplicates: false})
+                    .select('exercise_id, rpe_input, tonnage_input, updated_at')
+                    .single();
+                if (stateResult.error) {
+                    throw stateResult.error;
+                }
+                console.log("Normalized exercise state synced:", stateResult.data.exercise_id);
+            }
+            else if (record.kind == 'normalized_exercise') {
+                var exerciseResult = await supabaseClient
+                    .from('exercises')
+                    .upsert(record.payload, {onConflict: 'user_id,exercise_key'});
+                if (exerciseResult.error) {
+                    throw exerciseResult.error;
+                }
+            }
+            else if (record.kind == 'normalized_workout_exercise') {
+                var placementResult = await supabaseClient
+                    .from('workout_exercises')
+                    .upsert(record.payload, {onConflict: 'id'});
+                if (placementResult.error) {
+                    throw placementResult.error;
+                }
+            }
+            else if (record.kind == 'normalized_prescribed_set') {
+                var setResult = await supabaseClient
+                    .from('prescribed_sets')
+                    .upsert(record.payload, {onConflict: 'id'});
+                if (setResult.error) {
+                    throw setResult.error;
+                }
+            }
+            else if (record.kind == 'normalized_workout_progress') {
+                var progressResult = await supabaseClient
+                    .from('workouts')
+                    .update({current_day: record.payload.current_day, updated_at: record.payload.updated_at})
+                    .eq('id', record.payload.id);
+                if (progressResult.error) {
+                    throw progressResult.error;
+                }
+            }
+            else if (record.kind == 'normalized_active_workout') {
+                var activeResult = await supabaseClient
+                    .from('user_preferences')
+                    .upsert(record.payload, {onConflict: 'user_id'});
+                if (activeResult.error) {
+                    throw activeResult.error;
+                }
+            }
+            else {
+                await saveSupabaseWorkoutData(record.data, 1);
+            }
             await removeSupabaseOutboxRecord(record.id);
         }
     } catch (error) {
@@ -347,6 +444,10 @@ async function flushSupabaseOutbox() {
     } finally {
         supabaseSyncInProgress = false;
         updateSupabaseSyncStatus();
+        if (supabaseFlushRequested) {
+            supabaseFlushRequested = false;
+            flushSupabaseOutbox();
+        }
     }
 }
 
@@ -359,56 +460,8 @@ async function discardSupabaseOutbox() {
     updateSupabaseSyncStatus();
 }
 
-async function displaySyncDetails() {
-    var details = document.createElement('div');
-    details.id = "options";
-    details.className = "optionpanel";
-    details.style.display = "block";
-
-    var cancel = document.createElement('a');
-    var img = document.createElement('img');
-    img.src = "images/cancel.png";
-    cancel.appendChild(img);
-    cancel.href = "javascript:closeOptions();";
-
-    var h2 = document.createElement('h2');
-    h2.appendChild(cancel);
-    h2.appendChild(document.createTextNode("Sync Details"));
-    details.appendChild(h2);
-
-    var list = document.createElement('ul');
-    var pending = document.createElement('li');
-    pending.appendChild(document.createTextNode("Pending changes: checking"));
-    list.appendChild(pending);
-    var state = document.createElement('li');
-    state.appendChild(document.createTextNode(navigator.onLine ? "Connection: online" : "Connection: offline"));
-    list.appendChild(state);
-    var error = document.createElement('li');
-    error.appendChild(document.createTextNode("Last error: " + (supabaseLastSyncError || "none")));
-    list.appendChild(error);
-    details.appendChild(list);
-
-    var buttons = document.createElement('p');
-    var retry = document.createElement('a');
-    retry.className = "black button";
-    retry.href = "javascript:flushSupabaseOutbox();displaySyncDetails();";
-    retry.appendChild(document.createTextNode("Retry Sync"));
-    buttons.appendChild(retry);
-
-    var discard = document.createElement('a');
-    discard.className = "black button";
-    discard.href = "javascript:discardPendingSupabaseChanges();";
-    discard.appendChild(document.createTextNode("Discard Pending"));
-    buttons.appendChild(discard);
-    details.appendChild(buttons);
-
-    document.getElementById('options').replaceWith(details);
-    document.getElementById('header').style.display = 'none';
-    document.getElementById('main').style.display = 'none';
-    window.scrollTo(0, 0);
-
-    var records = await getSupabaseOutboxRecords();
-    pending.firstChild.textContent = "Pending changes: " + records.length;
+function displaySyncDetails() {
+    displaySupabaseOptions();
 }
 
 function discardPendingSupabaseChanges() {
@@ -420,6 +473,46 @@ function discardPendingSupabaseChanges() {
         displaySyncDetails();
     }).catch(function (error) {
         alert("Unable to discard pending changes\n" + error.message);
+    });
+}
+
+async function cleanupSupabaseRedundantMetrics() {
+    if (!supabaseClient) {
+        throw new Error('Supabase is not configured');
+    }
+    if (!navigator.onLine) {
+        throw new Error('An internet connection is required');
+    }
+
+    var user = await getSupabaseUser();
+    if (!user) {
+        throw new Error('A signed-in user is required');
+    }
+
+    var pendingRecords = await getSupabaseOutboxRecords();
+    if (pendingRecords.length) {
+        throw new Error('Sync pending changes before cleaning up history');
+    }
+
+    var result = await supabaseClient.rpc('delete_redundant_exercise_metrics');
+    if (result.error) {
+        throw result.error;
+    }
+    await loadNormalizedMetricCache();
+    return result.data;
+}
+
+function cleanUpSupabaseHistory() {
+    if (!window.confirm('Delete redundant max and tonnage entries, keeping the latest entry for each exercise and day?')) {
+        return;
+    }
+
+    cleanupSupabaseRedundantMetrics().then(function (deletedCount) {
+        alert('Redundant exercise history was deleted from Supabase.' +
+            (typeof deletedCount == 'number' ? ' Rows removed: ' + deletedCount + '.' : ''));
+        displaySupabaseOptions();
+    }).catch(function (error) {
+        alert('Unable to clean up exercise history\n' + error.message);
     });
 }
 
@@ -571,14 +664,40 @@ function displaySupabaseOptions() {
     authStatus.appendChild(authLabel);
     statusList.appendChild(authStatus);
 
+    var userStatus = document.createElement('li');
+    var userLabel = document.createTextNode("Signed-in user: checking");
+    userStatus.appendChild(userLabel);
+    statusList.appendChild(userStatus);
+
+    var connectionStatus = document.createElement('li');
+    connectionStatus.appendChild(document.createTextNode(navigator.onLine ? "Connection: online" : "Connection: offline"));
+    statusList.appendChild(connectionStatus);
+
+    var pendingStatus = document.createElement('li');
+    var pendingLabel = document.createTextNode("Pending changes: checking");
+    pendingStatus.appendChild(pendingLabel);
+    statusList.appendChild(pendingStatus);
+
+    var errorStatus = document.createElement('li');
+    errorStatus.appendChild(document.createTextNode("Last error: " + (supabaseLastSyncError || "none")));
+    statusList.appendChild(errorStatus);
+
     supabaseOptions.appendChild(statusList);
 
     getSupabaseUser().then(function (user) {
         authIndicator.replaceChildren(document.createTextNode(user ? "\u2713" : "\u20E0"));
         authLabel.textContent = user ? "Signed In / Authorized" : "Not Signed In";
+        userLabel.textContent = "Signed-in user: " + (user ? (user.email || user.id) : "none");
     }).catch(function () {
         authIndicator.replaceChildren(document.createTextNode("\u20E0"));
         authLabel.textContent = "Sign-in status unavailable";
+        userLabel.textContent = "Signed-in user: unavailable";
+    });
+
+    getSupabaseOutboxRecords().then(function (records) {
+        pendingLabel.textContent = "Pending changes: " + records.length;
+    }).catch(function () {
+        pendingLabel.textContent = "Pending changes: unavailable";
     });
 
     var buttonContainer = document.createElement('p');
@@ -586,7 +705,11 @@ function displaySupabaseOptions() {
         ["Sign In", "signInSupabaseEmail();"],
         ["Sign Out", "signOutSupabaseUser();"],
         ["Upload Current Data", "uploadCurrentWorkoutData();"],
-        ["Download Remote Data", "downloadSupabaseWorkoutData();"]
+        ["Download Remote Data", "downloadSupabaseWorkoutData();"],
+        ["Retry Sync", "flushSupabaseOutbox();displaySupabaseOptions();"],
+        ["Discard Pending", "discardPendingSupabaseChanges();"],
+        ["Import Legacy Data", "migrateLegacyDataFromPanel();"],
+        ["Clean Up History", "cleanUpSupabaseHistory();"]
     ];
 
     actions.forEach(function (action) {

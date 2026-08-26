@@ -31,13 +31,7 @@ function readStoredData() {
         updateStoredData('workoutData', workoutData)
     } 
     if (appStorage.get('googleData')) {
-        //console.log('found stored googleData');
         googleData = JSON.parse(appStorage.get("googleData"));
-        if ((gapiInited == false) || (gisInited == false) || (GooglePickerInited == false)) {
-            setTimeout(readStoredData, 100);
-            return;
-        }
-        readSyncFile(); // need to wait for updates localStorage and local data
     }
 }
 
@@ -48,9 +42,6 @@ function updateStoredData(item, value) {
     appStorage.set(item, JSON.stringify(value, null, 1));
     if (item == localStorageName && !suppressSupabaseMirror) {
         queueSupabaseWorkoutSave(value);
-    }
-    if (item != 'googleData' && googleData != null) {
-        updateSyncFile();
     }
 }
 
@@ -79,10 +70,22 @@ function clearStoredData(dataItem) {
   // }
 }
 
-function init () {
+async function init () {
     initializeSupabaseStorage();
     initializeStoredData();
     readStoredData();
+    if (typeof loadNormalizedWorkoutData == 'function') {
+        try {
+            var normalizedData = await loadNormalizedWorkoutData();
+            if (normalizedData && Object.keys(normalizedData.workouts).length) {
+                workoutData = normalizedData;
+                syncData = workoutData;
+                console.log("Workout data source: normalized Supabase");
+            }
+        } catch (error) {
+            console.warn("Normalized workout load failed; using legacy local data:", error);
+        }
+    }
     printAll();
 }
 
@@ -300,6 +303,10 @@ function completeDay(dayNum) {
     //console.log("Complete");
     selectedWorkoutData.currentDay = dayNum+1;
     updateStoredData('workoutData', workoutData)
+    if (typeof saveNormalizedWorkoutProgress == 'function' && normalizedMetricCacheLoaded) {
+        saveNormalizedWorkoutProgress(workoutData.selectedWorkout, selectedWorkoutData.currentDay)
+            .catch(function (error) { console.error("Normalized current day save error:", error); });
+    }
     printHeader(dayNum+1);
     printMain(dayNum+1);
     window.scrollTo(0, 0);
@@ -308,6 +315,10 @@ function resetToday() {
     //console.log("Reset");
     selectedWorkoutData.currentDay = 0;
     updateStoredData('workoutData', workoutData)
+    if (typeof saveNormalizedWorkoutProgress == 'function' && normalizedMetricCacheLoaded) {
+        saveNormalizedWorkoutProgress(workoutData.selectedWorkout, selectedWorkoutData.currentDay)
+            .catch(function (error) { console.error("Normalized current day save error:", error); });
+    }
     printHeader(0);
     printMain(0);
 }
@@ -564,6 +575,10 @@ function selectWorkout() {
 function updateSelectedWorkout(selectedWorkoutKey) {
     workoutData.selectedWorkout = selectedWorkoutKey;
     updateStoredData('workoutData', workoutData);
+    if (typeof saveNormalizedActiveWorkout == 'function' && normalizedMetricCacheLoaded) {
+        saveNormalizedActiveWorkout(selectedWorkoutKey)
+            .catch(function (error) { console.error("Normalized active workout save error:", error); });
+    }
     printAll();
     closeOptions();
 }
@@ -754,6 +769,16 @@ function updateWeights (dayNum, exerNum) {
     }
 
     updateStoredData('workoutData', workoutData);
+    if (typeof saveNormalizedWorkoutExercise == 'function' && normalizedMetricCacheLoaded) {
+        saveNormalizedWorkoutExercise(
+            workoutData.selectedWorkout,
+            dayNum,
+            exerNum,
+            selectedWorkoutData.days[dayNum].exercises[exerNum]
+        ).catch(function (error) {
+            console.error("Normalized workout definition save error:", error);
+        });
+    }
 }
 
 
@@ -1226,6 +1251,14 @@ function updateTonnage (dayNum, exerNum, rpeInput, tonnageInput, equivalentMax, 
         exerciseDb.maxHistory = [{date:logDate.toISOString(), equivalentMax:equivalentMax}];
     }
     updateStoredData('workoutData', workoutData);
+    if (typeof saveNormalizedExerciseState == 'function' && normalizedMetricCacheLoaded) {
+        saveNormalizedExerciseState(exercise.exerciseKey, rpeInput, tonnageInput)
+            .catch(function (error) { console.error("Normalized exercise state save error:", error); });
+    }
+    if (typeof appendNormalizedMetric == 'function' && normalizedMetricCacheLoaded) {
+        appendNormalizedMetric(exercise.exerciseKey, equivalentMax, overallTonnage)
+            .catch(function (error) { console.error("Normalized metric save error:", error); });
+    }
 }
 
 function getWorkingSetsRepsRpeWeight(exerciseDb) {
@@ -1490,9 +1523,14 @@ function displayTonnageHistory(dayNum, exerNum, tonnageFormData) {
         document.getElementById('main').style.display = 'none';
         window.scrollTo(0, 0);
 
-        if ((exerciseDb.tonnageHistory?.length>0) && (exerciseDb.maxHistory?.length>0)) {
-            printVerticalStripChart('Tonnage', exerciseDb.tonnageHistory);
-            printVerticalStripChart('Max', exerciseDb.maxHistory);
+        var normalizedHistory = typeof getNormalizedMetricHistory == 'function'
+            ? getNormalizedMetricHistory(exercise.exerciseKey)
+            : null;
+        var maxHistory = normalizedHistory ? normalizedHistory.maxHistory : exerciseDb.maxHistory;
+        var tonnageHistory = normalizedHistory ? normalizedHistory.tonnageHistory : exerciseDb.tonnageHistory;
+        if ((tonnageHistory?.length>0) && (maxHistory?.length>0)) {
+            printVerticalStripChart('Tonnage', tonnageHistory);
+            printVerticalStripChart('Max', maxHistory);
         }
 
         var buttonContainer = document.createElement('p');
