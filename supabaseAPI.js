@@ -593,7 +593,20 @@ async function uploadCurrentWorkoutData() {
         }
 
         await saveSupabaseWorkoutData(workoutData, 1);
-        alert("Workout data uploaded to Supabase.");
+        if (typeof migrateLegacyWorkoutDataToSupabase == 'function') {
+            var normalizedWorkouts = await supabaseClient
+                .from('workouts')
+                .select('id')
+                .limit(1);
+            if (normalizedWorkouts.error) {
+                throw normalizedWorkouts.error;
+            }
+            if (!normalizedWorkouts.data.length) {
+                await migrateLegacyWorkoutDataToSupabase();
+            }
+            await loadNormalizedWorkoutData();
+        }
+        alert("Workout data uploaded to Supabase and normalized data is ready.");
     } catch (error) {
         alert("Supabase upload error\n" + error.message);
     }
