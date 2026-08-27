@@ -40,9 +40,6 @@ function updateStoredData(item, value) {
         backupStoredWorkoutData();
     }
     appStorage.set(item, JSON.stringify(value, null, 1));
-    if (item == localStorageName && !suppressSupabaseMirror) {
-        queueSupabaseWorkoutSave(value);
-    }
 }
 
 function initializeStoredData () {

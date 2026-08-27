@@ -32,7 +32,6 @@ function saveNormalizedCache() {
         });
     });
 }
-
 function loadNormalizedCache() {
     return openSupabaseOutbox().then(function (database) {
         return new Promise(function (resolve, reject) {
@@ -636,14 +635,84 @@ async function migrateLegacyWorkoutDataToSupabase() {
     await insertNormalizedRows('user_preferences', [normalized.preferences]);
 }
 
-function migrateLegacyDataFromPanel() {
-    if (!window.confirm('Import the current legacy workout data into the normalized Supabase tables?')) {
-        return;
+async function syncNormalizedWorkoutData() {
+    await flushSupabaseOutbox();
+    await loadNormalizedMetricCache();
+    var normalizedData = normalizedWorkoutData;
+    if (!normalizedData) {
+        throw new Error('No normalized workout data was found');
     }
-    migrateLegacyWorkoutDataToSupabase().then(function () {
-        alert('Legacy workout data was imported into the normalized schema.');
+    workoutData = normalizedData;
+    syncData = workoutData;
+    selectedWorkoutData = workoutData.workouts[workoutData.selectedWorkout];
+    printAll();
+}
+
+async function replaceNormalizedWorkoutDataFromLocal() {
+    if (!supabaseClient) {
+        throw new Error('Supabase is not configured');
+    }
+    var user = await getSupabaseUser();
+    if (!user) {
+        throw new Error('A signed-in user is required');
+    }
+    var pendingRecords = await getSupabaseOutboxRecords();
+    if (pendingRecords.length) {
+        throw new Error('Sync pending changes before replacing normalized data');
+    }
+
+    var preferenceResult = await supabaseClient
+        .from('user_preferences')
+        .delete()
+        .eq('user_id', user.id);
+    if (preferenceResult.error) {
+        throw preferenceResult.error;
+    }
+    var workoutResult = await supabaseClient
+        .from('workouts')
+        .delete()
+        .eq('user_id', user.id);
+    if (workoutResult.error) {
+        throw workoutResult.error;
+    }
+    var exerciseResult = await supabaseClient
+        .from('exercises')
+        .delete()
+        .eq('user_id', user.id);
+    if (exerciseResult.error) {
+        throw exerciseResult.error;
+    }
+
+    normalizedWorkoutData = null;
+    normalizedExerciseIdByKey = {};
+    normalizedWorkoutIdByKey = {};
+    normalizedDayIdByLocation = {};
+    normalizedPlacementByLocation = {};
+    normalizedSetByPlacement = {};
+    normalizedMetricCache = {};
+    normalizedExerciseStateCache = {};
+    normalizedMetricCacheLoaded = false;
+    await migrateLegacyWorkoutDataToSupabase();
+    await syncNormalizedWorkoutData();
+}
+
+function syncNormalizedDataFromPanel() {
+    syncNormalizedWorkoutData().then(function () {
+        alert('Normalized data was synchronized.');
         displaySupabaseOptions();
     }).catch(function (error) {
-        alert('Unable to import legacy workout data\n' + error.message);
+        alert('Unable to synchronize normalized data\n' + error.message);
+    });
+}
+
+function replaceNormalizedDataFromPanel() {
+    if (!window.confirm('Replace all normalized Supabase data for this account with the current local JSON?')) {
+        return;
+    }
+    replaceNormalizedWorkoutDataFromLocal().then(function () {
+        alert('Normalized Supabase data was replaced from local JSON.');
+        displaySupabaseOptions();
+    }).catch(function (error) {
+        alert('Unable to replace normalized data\n' + error.message);
     });
 }

@@ -125,48 +125,7 @@ async function loadSupabaseWorkoutData() {
 }
 
 async function reconcileGoogleDriveWorkoutData(driveData) {
-    try {
-        if (!supabaseClient) {
-            return {data: driveData, source: "drive", mirror: false};
-        }
-
-        var user = await getSupabaseUser();
-        if (!user) {
-            return {data: driveData, source: "drive", mirror: false};
-        }
-
-        var remoteData = await loadSupabaseWorkoutData();
-        if (!remoteData) {
-            return {data: driveData, source: "drive", mirror: true};
-        }
-        if (!validateJsonData(remoteData.data) || JSON.stringify(driveData) == JSON.stringify(remoteData.data)) {
-            return {data: driveData, source: "drive", mirror: false};
-        }
-
-        console.groupCollapsed("Google Drive / Supabase data difference");
-        console.log("Google Drive data:", driveData);
-        console.log("Supabase data:", remoteData.data);
-        console.groupEnd();
-
-        var choice = window.prompt(
-            "Google Drive and Supabase contain different workout data. Type drive to use Google Drive, supabase to use Supabase, or cancel to leave both unchanged.",
-            "drive"
-        );
-        if (!choice || choice.toLowerCase() == "cancel") {
-            return {data: null, source: "cancel", mirror: false};
-        }
-        if (choice.toLowerCase() == "supabase") {
-            return {data: remoteData.data, source: "supabase", mirror: false};
-        }
-        if (choice.toLowerCase() == "drive") {
-            return {data: driveData, source: "drive", mirror: true};
-        }
-        alert("No workout data was changed. Type drive or supabase next time.");
-        return {data: null, source: "cancel", mirror: false};
-    } catch (error) {
-        console.error("Supabase comparison error:", error);
-        return {data: driveData, source: "drive", mirror: false};
-    }
+    return {data: driveData, source: "drive", mirror: false};
 }
 
 function applyGoogleReadData(data) {
@@ -299,23 +258,7 @@ function removeSupabaseOutboxRecord(id) {
 }
 
 function queueSupabaseWorkoutSave(data) {
-    var dataCopy = JSON.parse(JSON.stringify(data));
-    addSupabaseOutboxRecord({
-        data: dataCopy,
-        accountId: supabaseSession ? supabaseSession.user.id : null,
-        createdAt: Date.now(),
-        attempts: 0,
-        lastError: null
-    }).then(function () {
-        updateSupabaseSyncStatus();
-        return flushSupabaseOutbox();
-    }).then(function () {
-        updateSupabaseSyncStatus();
-    }).catch(function (error) {
-        supabaseLastSyncError = error.message;
-        updateSupabaseSyncStatus();
-        console.error("Supabase outbox error:", error);
-    });
+    return Promise.resolve();
 }
 
 async function flushSupabaseOutbox() {
@@ -434,7 +377,8 @@ async function flushSupabaseOutbox() {
                 }
             }
             else {
-                await saveSupabaseWorkoutData(record.data, 1);
+                await removeSupabaseOutboxRecord(record.id);
+                continue;
             }
             await removeSupabaseOutboxRecord(record.id);
         }
@@ -473,6 +417,15 @@ function discardPendingSupabaseChanges() {
         displaySyncDetails();
     }).catch(function (error) {
         alert("Unable to discard pending changes\n" + error.message);
+    });
+}
+
+function retryPendingSupabaseChanges() {
+    flushSupabaseOutbox().then(function () {
+        alert('Pending normalized changes were retried.');
+        displaySupabaseOptions();
+    }).catch(function (error) {
+        alert('Unable to retry pending changes\n' + error.message);
     });
 }
 
@@ -579,39 +532,6 @@ function signOutSupabaseUser() {
     });
 }
 
-async function uploadCurrentWorkoutData() {
-    try {
-        var user = await getSupabaseUser();
-        if (!user) {
-            alert("Sign in to Supabase before uploading workout data.");
-            return;
-        }
-
-        var existingData = await loadSupabaseWorkoutData();
-        if (existingData && !window.confirm("Supabase already has workout data. Replace it with this browser's data?")) {
-            return;
-        }
-
-        await saveSupabaseWorkoutData(workoutData, 1);
-        if (typeof migrateLegacyWorkoutDataToSupabase == 'function') {
-            var normalizedWorkouts = await supabaseClient
-                .from('workouts')
-                .select('id')
-                .limit(1);
-            if (normalizedWorkouts.error) {
-                throw normalizedWorkouts.error;
-            }
-            if (!normalizedWorkouts.data.length) {
-                await migrateLegacyWorkoutDataToSupabase();
-            }
-            await loadNormalizedWorkoutData();
-        }
-        alert("Workout data uploaded to Supabase and normalized data is ready.");
-    } catch (error) {
-        alert("Supabase upload error\n" + error.message);
-    }
-}
-
 async function downloadSupabaseWorkoutData() {
     try {
         var user = await getSupabaseUser();
@@ -620,16 +540,18 @@ async function downloadSupabaseWorkoutData() {
             return;
         }
 
-        var remoteData = await loadSupabaseWorkoutData();
-        if (!remoteData || !validateJsonData(remoteData.data)) {
-            alert("No valid workout data was found in Supabase.");
+        var normalizedData = typeof loadNormalizedWorkoutData == 'function'
+            ? await loadNormalizedWorkoutData()
+            : null;
+        if (!normalizedData || !validateJsonData(normalizedData)) {
+            alert("No normalized workout data was found in Supabase.");
             return;
         }
-        if (!window.confirm("Replace this browser's workout data with the Supabase copy?")) {
+        if (!window.confirm("Replace this browser's workout data with the normalized Supabase copy?")) {
             return;
         }
 
-        workoutData = remoteData.data;
+        workoutData = normalizedData;
         syncData = workoutData;
         selectedWorkoutData = workoutData.workouts[workoutData.selectedWorkout];
         backupStoredWorkoutData();
@@ -715,20 +637,21 @@ function displaySupabaseOptions() {
 
     var buttonContainer = document.createElement('p');
     var actions = [
-        ["Sign In", "signInSupabaseEmail();"],
-        ["Sign Out", "signOutSupabaseUser();"],
-        ["Upload Current Data", "uploadCurrentWorkoutData();"],
-        ["Download Remote Data", "downloadSupabaseWorkoutData();"],
-        ["Retry Sync", "flushSupabaseOutbox();displaySupabaseOptions();"],
-        ["Discard Pending", "discardPendingSupabaseChanges();"],
-        ["Import Legacy Data", "migrateLegacyDataFromPanel();"],
-        ["Clean Up History", "cleanUpSupabaseHistory();"]
+        ["Sign In", "signInSupabaseEmail();", "Sign in to Supabase."],
+        ["Sign Out", "signOutSupabaseUser();", "Sign out of the current Supabase account."],
+        ["Upload/Replace With Local Data", "replaceNormalizedDataFromPanel();", "Delete this account's normalized data and replace it with the current local JSON."],
+        ["Download Normalized Data", "syncNormalizedDataFromPanel();", "Download the latest normalized data from Supabase into this app and IndexedDB."],
+        ["Retry Pending", "retryPendingSupabaseChanges();", "Retry uploading pending granular changes from this browser."],
+        ["Discard Pending", "discardPendingSupabaseChanges();", "Delete unsent offline changes from this browser."],
+        ["Clean Up History", "cleanUpSupabaseHistory();", "Keep only the latest metric entry for each exercise and local day."]
     ];
 
     actions.forEach(function (action) {
         var button = document.createElement('a');
         button.className = "black button";
         button.href = "javascript:" + action[1];
+        button.title = action[2];
+        button.setAttribute('aria-label', action[2]);
         button.appendChild(document.createTextNode(action[0]));
         buttonContainer.appendChild(button);
     });

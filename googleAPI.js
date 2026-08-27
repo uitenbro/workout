@@ -222,18 +222,7 @@ async function handleReadSyncFile(response) {
     //console.log(response);
     // Check if response is a valid JSON object with appropriate data
     if (validateJsonData(response)) {
-      var reconciliation = await reconcileGoogleDriveWorkoutData(response);
-      if (reconciliation.data == null) {
-        googleSyncInProgress(false);
-        return;
-      }
-      applyGoogleReadData(reconciliation.data);
-      if (reconciliation.source == "supabase") {
-        writeToGoogleDrive(googleData.syncFile, 'PATCH', reconciliation.data, handleUpdateSyncFile);
-      }
-      else if (reconciliation.mirror) {
-        queueSupabaseWorkoutSave(reconciliation.data);
-      }
+      applyGoogleReadData(response);
       console.log("Local Storage updated with Google Drive Data");
       setLastReadTime();
       updateStoredData('googleData', googleData);
